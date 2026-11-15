@@ -1,13 +1,13 @@
-# Game data — never commit copyrighted disc images or personal saves
+# Game data — never commit copyrighted disc images
 Base ISO/
-Saves/
 *.iso
-*.ps2
-*.mcd
-*.mc2
 *.bin
-# Third-party research inputs (community cheat table / guides) are not redistributed
-Cheats/
+# Saves (memory cards) + cheats are now tracked as test content
+# Saves/
+# *.ps2
+# *.mcd
+# *.mc2
+# Cheats/
 # Local Claude Code harness artifacts
 .claude/
 __pycache__/
