@@ -58,8 +58,8 @@ byte offsets (all 113 verified divisible by 0x78). Two parallel base pointers:
 | +0x2A | u16 | MDF |
 | +0x2C | u16 | SPD |
 | +0x2E | u16 | LUK |
-| +0x49 | u8  | current rune uses (set = +0x4D to refill) |
-| +0x4D | u8  | max rune uses |
+| +0x49 | u8[4] | MAX rune uses per spell level 1..4 (array A) — CORRECTED 2026-11-15: the CT had the two arrays swapped; code RE (lab reward_sites.md Site 5) shows the refill routines copy +0x49 -> +0x4D and the cast deduction decrements +0x4D |
+| +0x4D | u8[4] | CURRENT (remaining) rune uses per spell level 1..4 (array B) |
 
 ### Equipment record (relative to `iPartySlot`, on `FirstPartyItem` base)
 | Off | Type | Field |
@@ -214,6 +214,18 @@ holds the character/item/spell tables is the remaining question (#47);
 the first fingerprint sweep is recorded in the PS2 RE lab writeup
 (`~/workspace/ps2-re/games/suikoden4/FILEDATA.md`).
 
+Update 2026-11-15 (#47, later the same day): the savestate-RAM census
+(attack 4) matched 16,872 entries resident in RAM, but the item/rune/
+character definition tables are not among them (the savestate was taken
+in the field; they likely load with menus/battles). Every static name
+fingerprint also came up empty: the item/rune/character name lists
+appear nowhere on the disc as terminated-string sequences (whole-ISO
+scan) or as record-embedded name fields (282,715 combos). The BIN gaps
+hold MPEG video and a second fixed-block container family (magic
+0x29857294), not tables. Next route is the PCSX2 harness (#34):
+menu-open RAM snapshots diffed against the field savestate. Full
+record: lab `games/suikoden4/FILEDATA.md`.
+
 ## Recruitment flags — CRACKED (write-enabled)
 **Recruited[i] = gamedata `0x164 + rosterIndex*0x78` (one byte per character).**
 Values (decimal): `0` Not Recruited · `1` In Your Company (guest) · `10` Recruited ·
@@ -276,3 +288,51 @@ damage curve. S4's ELF 2nd PT_LOAD (file 0x278480, vaddr 0x4F7480) was scanned t
 way; the ascending-field heuristic is too noisy here (hit only lookup ramps like a
 37,39,41,… scaling table at vaddr 0x589FB0, not spells). Needs a name-string or
 damage-value anchor from a guide to pin the table. Deferred.
+
+## Inventory + rune uses — LOCATED 2026-11-15 (write-enabled)
+
+Party bag: u32 item ids at gamedata 0xCC24 (RAM 0x53F484), one slot per physical
+item (quantity = slot count; 15 Medicines = 15 slots). Found by save diffing: the
+s401->s402 diff rewrites exactly one slot in place (Soap -> Green Bottle) alongside
+potch/time/EXP changes, and the array decodes to in-range ids (1..518) packed from
+slot 0 with a zero tail in all 16 real saves examined (NTSC + PAL, four
+playthroughs). The next identified array starts at 0xCD50, bounding the bag at 75
+slots. Static RE (lab inventory_sites.md, 2026-11-15) corroborates 75: the ELF's
+only two slti bounds of 75 live in func_0046BFE8 (words verified on the pristine
+disc at ISO 0x2A49FC / 0x2A4B04), in a paged-list routine whose counters cap at
+75 and 4. The bag is not compacted by the game (holes can exist mid-array); the
+editor's decode skips empty slots and its writes preserve the item multiset.
+Shipped as the save editor's Items tab (INVENTORY_OFF / INVENTORY_SLOTS in
+s4save.py).
+
+Rune uses: the CT's RAM stat record is the save's prog record (its base 0x532968 is
+PROG_BASE in save terms). The uses are per spell LEVEL: array A at prog +0x49 is
+the MAX per level, array B at prog +0x4D is the CURRENT (remaining) per level.
+(The CT's labels had A and B swapped; corrected by code RE, lab reward_sites.md
+Site 5: refill funcs copy A -> B, the cast deduction decrements B, the cast gate
+reads A.) Real-save shape confirms it: max arrays read [9,5,2,1] / [5,2,1,0] by
+level, at-rest saves hold current == max, and spent casters show current < max on
+single levels (Josh's Ted Lv4 1/2; Sparda s402 hero Lv2 1/2; Lo Fong Lv1 max 7,
+current 4 - the byte pair that looked anomalous under the swapped labels).
+Shipped as the character card's per-level Rune uses fields + refill button
+(stages current := max on all four levels). The ISO editor also gained the
+matching disc patch: Free rune casting NOPs the deduction call (jal 0x2BBA58 at
+vaddr 0x45F26C, ISO 0x297A6C, stock bytes verified).
+
+Party membership: derived from the recruitment enum (11 = In Party, 15 =
+Permanently In Party). Every real save examined holds exactly 4 (hero at 15 plus
+three at 11). Shipped as the Party tab; the save records no separate slot order,
+so the tab lists roster order.
+
+Located but NOT yet identified (static RE, lab inventory_sites.md 2026-11-15):
+- Trade-goods records at 0xC8D0 (RAM 0x53F130): the region is 852 bytes = 53
+  records of 16 bytes plus one trailing u32 (always zero). Fields +4/+8/+12 are
+  zero in every save examined, populated or not, so quantity is NOT stored in
+  the record (runtime-only, elsewhere, or the records are an encountered /
+  offered registry rather than stock). No trade editor until that resolves.
+- A 13-entry u32 item list at 0xCD50 (RAM 0x53F5B0) followed by one varying
+  negative s32 word; present only in late-game saves. Mixed gear, consumables
+  and rune orbs/pieces.
+- A structure at 0xCDB4 (RAM 0x53F614): u32 values 1,1,1,2,2,2,3,3,3,...
+  (ascending ids, each exactly 3 times, at least ids 1..11), late-game only,
+  with a byte array starting 01 02 03 04 05 01 01 01 at 0xCE9C right after it.

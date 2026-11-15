@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node validate.mjs && node save-roundtrip.mjs && node subfile-index.mjs"
+    "test": "node validate.mjs && node save-roundtrip.mjs && node subfile-index.mjs && node vcdiff.mjs && node stock-restore.mjs"
   }
 }

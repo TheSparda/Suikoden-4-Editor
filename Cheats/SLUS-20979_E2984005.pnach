@@ -1,0 +1,216 @@
+// =====================================================
+// Suikoden IV (SLUS-20979 / E2984005)
+//
+// QoL Suite
+//   1) Triangle = Sprint (movement speed selectable)
+//   2) Disable Triangle “walk” clamp (Triangle doesn’t force-walk)
+//   3) Animation speed while sprinting (selectable)
+//   4) Invert camera X
+//   5) Faster area transitions (toggle + optional extra)
+//
+// CAVES USED
+//   Cave A: 00338F90 - 00339034
+//     - Sprint movement logic
+//     - Normal movement logic
+//
+//   Cave B: 0033B378 - 0033B414
+//     - Walk-disabler
+//     - Animation-speed logic
+//     - Float multiplier table
+//
+// DEFAULTS
+//   Movement sprint: 1.666x
+//   Animation sprint: 1.25x
+//   Camera X invert: ON
+//   Camera speed: 2.5x (moving + not moving)
+//   Area transitions: 2.0x (extra 2.0x line OFF)
+//
+// =====================================================
+
+
+
+// =====================================================
+// FLOAT MULTIPLIER TABLE (Cave B @ 0033B3D0)
+// IEEE754 float32
+//
+// Offsets:
+//   +00 : 1.25
+//   +04 : 1.333...
+//   +08 : 1.5
+//   +0C : 1.666...
+//   +10 : 1.75
+//   +14 : 2.0
+//   +18 : 1.15
+// =====================================================
+patch=1,EE,0033B3D0,word,3FA00000  // 1.25
+patch=1,EE,0033B3D4,word,3FAAAAAB  // 1.3333334
+patch=1,EE,0033B3D8,word,3FC00000  // 1.5
+patch=1,EE,0033B3DC,word,3FD55555  // 1.6666666
+patch=1,EE,0033B3E0,word,3FE00000  // 1.75
+patch=1,EE,0033B3E4,word,40000000  // 2.0
+patch=1,EE,0033B3E8,word,3F933333  // 1.15
+
+
+
+// =====================================================
+// 1) TRIANGLE = SPRINT (MOVEMENT SPEED)
+// Hook: 002DD5DC → Cave A
+// =====================================================
+patch=1,EE,002DD5DC,word,080CE3E4
+patch=1,EE,002DD5E0,word,00000000
+
+// -----------------------------------------------------
+// Sprint Movement Cave (Cave A @ 00338F90)
+//
+// Triangle pressed:
+//   pos += delta * MOVEMENT_MULT   (EE FPU scalar)
+//
+// Triangle not pressed:
+//   original VU vector add
+//
+// -----------------------------------------------------
+// MOVEMENT MULTIPLIER SELECT (ONE LINE):
+//   Change patch at 00338FBC:
+//
+//   1.25  → 8D080000
+//   1.333 → 8D080004
+//   1.5   → 8D080008
+//   1.666 → 8D08000C   (DEFAULT)
+//   1.75  → 8D080010
+//   2.0   → 8D080014
+//   1.15  → 8D080018
+// -----------------------------------------------------
+
+// Read Triangle state from 0x005BC300
+patch=1,EE,00338F90,word,3C09005B
+patch=1,EE,00338F94,word,3529C300
+patch=1,EE,00338F98,word,91290000
+patch=1,EE,00338F9C,word,31290010
+patch=1,EE,00338FA0,word,11200016
+patch=1,EE,00338FA4,word,00000000
+
+// Sprint path (Triangle pressed): load delta xyz (s0)
+patch=1,EE,00338FA8,word,C6000000
+patch=1,EE,00338FAC,word,C6010004
+patch=1,EE,00338FB0,word,C6020008
+
+// Load MOVEMENT_MULT from table @ 0033B3D0
+patch=1,EE,00338FB4,word,3C080033
+patch=1,EE,00338FB8,word,3508B3D0
+patch=1,EE,00338FBC,word,8D08000C   // <<< MOVEMENT MULTIPLIER (DEFAULT 1.666x)
+patch=1,EE,00338FC0,word,44881800
+
+// Scale delta by multiplier
+patch=1,EE,00338FC4,word,46030002
+patch=1,EE,00338FC8,word,46030842
+patch=1,EE,00338FCC,word,46031082
+
+// Load pos xyz (s3)
+patch=1,EE,00338FD0,word,C6640000
+patch=1,EE,00338FD4,word,C6650004
+patch=1,EE,00338FD8,word,C6660008
+
+// Add scaled delta
+patch=1,EE,00338FDC,word,46002100
+patch=1,EE,00338FE0,word,46012940
+patch=1,EE,00338FE4,word,46023180
+
+// Store pos
+patch=1,EE,00338FE8,word,E6640000
+patch=1,EE,00338FEC,word,E6650004
+patch=1,EE,00338FF0,word,E6660008
+
+// Return
+patch=1,EE,00338FF4,word,080B757B
+patch=1,EE,00338FF8,word,00000000
+
+// Normal movement path (Triangle not pressed)
+patch=1,EE,00338FFC,word,DA640000
+patch=1,EE,00339000,word,DA050000
+patch=1,EE,00339004,word,4BC52128
+patch=1,EE,00339008,word,FA640000
+patch=1,EE,0033900C,word,080B757B
+patch=1,EE,00339010,word,00000000
+
+
+
+// =====================================================
+// 2) WALK-DISABLER
+// Triangle no longer clamps movement to “walk”
+// =====================================================
+patch=1,EE,002965B0,word,080CECDE
+patch=1,EE,002965B4,word,00000000
+
+patch=1,EE,0033B378,word,3108FFEF
+patch=1,EE,0033B37C,word,A5A80000
+patch=1,EE,0033B380,word,25B80028
+patch=1,EE,0033B384,word,080A596E
+patch=1,EE,0033B388,word,00000000
+
+
+
+// =====================================================
+// 3) ANIMATION SPEED WHILE SPRINTING
+// Hook: 004C98C8 → Cave B
+//
+// IMPORTANT: delay slot preserved (prevents freeze)
+// =====================================================
+patch=1,EE,004C98C8,word,080CECE4
+patch=1,EE,004C98CC,word,96A40002
+
+// -----------------------------------------------------
+// ANIMATION MULTIPLIER SELECT:
+//   Change patch at 0033B3B0:
+//
+//   1.15  → 8D290018	(DEFAULT)
+//   1.25  → 8D290000   
+//   1.333 → 8D290004
+//   1.5   → 8D290008
+//   1.666 → 8D29000C
+//   1.75  → 8D290010
+//   2.0   → 8D290014
+// -----------------------------------------------------
+
+patch=1,EE,0033B390,word,3C08005B
+patch=1,EE,0033B394,word,3508C300
+patch=1,EE,0033B398,word,91080000
+patch=1,EE,0033B39C,word,31080010
+patch=1,EE,0033B3A0,word,11000006
+patch=1,EE,0033B3A4,word,00000000
+
+patch=1,EE,0033B3A8,word,3C090033
+patch=1,EE,0033B3AC,word,3529B3D0
+patch=1,EE,0033B3B0,word,8D290018   // <<< ANIMATION MULTIPLIER (DEFAULT 1.15x)
+patch=1,EE,0033B3B4,word,44890000
+patch=1,EE,0033B3B8,word,4600B582
+
+patch=1,EE,0033B3BC,word,4616A500
+patch=1,EE,0033B3C0,word,08132634
+patch=1,EE,0033B3C4,word,00000000
+
+
+
+// =====================================================
+// 4) CAMERA: INVERT X AXIS
+//
+// Notes:
+// - 00300584 is an instruction patch that inverts camera x while moving.
+// - 00587514 and 00587530 are float scalars (speed/magnitude).
+//	- Negative flips direction.
+//	- Works somewhat but causes issues so scaling is not included for now.
+// =====================================================
+patch=1,EE,00587514,word,BFC90FD9	// Invert camera x axis (NOT moving)
+patch=1,EE,00300584,word,46000DC6	// Invert camera x axis (moving)
+
+
+
+// =====================================================
+// 5) FASTER AREA TRANSITIONS
+//
+//   1x  : disable both (set patch=0 on both lines)
+//   2x  : enable first, disable second (DEFAULT below)
+//   4x  : enable both (set patch=1 on both lines)
+//
+// =====================================================
+patch=1,EE,0029F1C4,word,460318C0	// DEFAULT: Speed up 2x
+patch=0,EE,0029F1C8,word,460318C0	// Optional: additional 2x (enable for ~4x)

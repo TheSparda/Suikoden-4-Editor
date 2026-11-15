@@ -63,6 +63,35 @@
       read: (dv) => dv.getUint8(3) === 0x24 && dv.getUint8(0) === 0x00 ? 1 : 0,
       write: (dv, on) => { (on ? [0x00, 0x00, 0x02, 0x24] : [0x5C, 0x57, 0x0B, 0x0C]).forEach((v, i) => dv.setUint8(i, v)); },
     },
+    {
+      key: "infItems", group: "Items", type: "bool",
+      label: "Infinite item use",
+      sub: "Items are not consumed when used — a Medicine heals and stays in the bag. " +
+           "This is the community trainer tables' patch: it NOPs the instruction that loads " +
+           "an item's remaining count on the use path (verified unique on the NTSC-U disc).",
+      off: 0xFB878, len: 4,
+      onBytes: [0x00, 0x00, 0x00, 0x00],             // nop the count load (patched)
+      offBytes: [0x04, 0x00, 0x22, 0x92],            // lbu v0, 4(s1) (stock)
+      sig: (b) => (b[0] === 0x04 && b[1] === 0x00 && b[2] === 0x22 && b[3] === 0x92) ||
+                  (b[0] === 0x00 && b[1] === 0x00 && b[2] === 0x00 && b[3] === 0x00),
+      read: (dv) => dv.getUint32(0, true) === 0 ? 1 : 0,
+      write: (dv, on) => { (on ? [0, 0, 0, 0] : [0x04, 0x00, 0x22, 0x92]).forEach((v, i) => dv.setUint8(i, v)); },
+    },
+    {
+      key: "freeCasting", group: "Battle", type: "bool",
+      label: "Free rune casting",
+      sub: "Casting never spends a rune use. The cast path ends by calling the use-count " +
+           "deduction (jal at 0x45F26C); NOP-ing that call leaves the per-level counts " +
+           "untouched. Located by static RE of the game's own code (lab reward_sites.md) " +
+           "and verified against the NTSC-U disc; covers the main cast path.",
+      off: 0x297A6C, len: 4,
+      onBytes: [0x00, 0x00, 0x00, 0x00],             // nop (patched)
+      offBytes: [0x96, 0xEE, 0x0A, 0x0C],            // jal 0x2BBA58 (stock)
+      sig: (b) => (b[0] === 0x96 && b[1] === 0xEE && b[2] === 0x0A && b[3] === 0x0C) ||
+                  (b[0] === 0x00 && b[1] === 0x00 && b[2] === 0x00 && b[3] === 0x00),
+      read: (dv) => dv.getUint32(0, true) === 0 ? 1 : 0,
+      write: (dv, on) => { (on ? [0, 0, 0, 0] : [0x96, 0xEE, 0x0A, 0x0C]).forEach((v, i) => dv.setUint8(i, v)); },
+    },
   ];
 
   // ---- capability detection ---------------------------------------------------
@@ -211,11 +240,17 @@
       </div>`;
     }).join("");
 
-    $("#isoEditor").innerHTML = groupHtml + `
+    $("#isoEditor").innerHTML = groupHtml + changesHtml() + `
       <div class="card">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
           <button class="chip" id="isoPnach">⧉ Copy pnach line</button>
           <span class="muted">${esc(isoName)} · ${esc(modeNote)}</span>
+        </div>
+        <div class="row" style="flex-wrap:wrap;gap:8px;margin-top:8px">
+          <button class="chip" id="isoRecipe">⤓ Export .s4mod</button>
+          <button class="chip" id="isoXdelta">⤓ Export .xdelta</button>
+          <button class="chip" id="isoPatchBtn">⤒ Apply patch…</button>
+          <input type="file" id="isoPatchFile" accept=".s4mod,.xdelta,.json" style="display:none">
         </div>
         <div class="toolbar">
           ${mode === "none"
@@ -231,6 +266,17 @@
     const sv = $("#isoSave"); if (sv) sv.onclick = save;
     const rs = $("#isoReset"); if (rs) rs.onclick = () => { for (const k in WINDOWS) WINDOWS[k].buf.set(WINDOWS[k].orig); render(); };
     $("#isoPnach").onclick = copyPnach;
+    const er = $("#isoRecipe"); if (er) er.onclick = exportRecipe;
+    const ex = $("#isoXdelta"); if (ex) ex.onclick = exportXdelta;
+    const pb = $("#isoPatchBtn"), pf = $("#isoPatchFile");
+    if (pb && pf) { pb.onclick = () => pf.click(); pf.onchange = () => { if (pf.files[0]) applyPatchFile(pf.files[0]); pf.value = ""; }; }
+    $$("[data-restore]").forEach((b) => (b.onclick = () => {
+      const f = FIELDS.find((x) => x.key === b.dataset.restore);
+      const w = f && win(f.key); if (!w) return;
+      w.buf.set(stockBytes(f)); render();
+    }));
+    const ra = $("#isoRestoreAll");
+    if (ra) ra.onclick = () => { FIELDS.forEach((f) => { const w = win(f.key); if (w) w.buf.set(stockBytes(f)); }); render(); };
   }
 
   function fieldHtml(f) {
@@ -425,6 +471,153 @@
     (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
       .then(() => setStatus("Copied a pnach snippet for your current values to the clipboard.", "ok"))
       .catch(() => { prompt("Copy these pnach lines:", text); });
+  }
+
+  // ---- mod recipes (.s4mod) + .xdelta import/export ---------------------------
+  // A recipe is a tiny, reversible, version-checked JSON of the exact byte changes.
+  // An .xdelta is the standard VCDIFF form of the same changes, synthesized by
+  // vcdiff.js from the staged runs (never by diffing the 4 GB disc).
+  const bytesHex = (bs) => [...bs].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const hexBytes = (h) => { const o = new Uint8Array(h.length / 2); for (let i = 0; i < o.length; i++) o[i] = parseInt(h.substr(i * 2, 2), 16); return o; };
+  function winFor(off, len) {
+    for (const k in WINDOWS) { const w = WINDOWS[k]; if (off >= w.off && off + len <= w.off + w.len) return w; }
+    return null;
+  }
+  function runsWithOld() {
+    return allRuns().map((r) => {
+      const w = winFor(r.off, r.bytes.length);
+      return { off: r.off, bytes: r.bytes, old: w ? w.orig.slice(r.off - w.off, r.off - w.off + r.bytes.length) : null };
+    });
+  }
+  function download(name, blob) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+  const modBase = () => (isoName.replace(/\.[^.]+$/, "") || "s4");
+
+  function exportRecipe() {
+    if (!anyDirty()) return setStatus("No changes to export — edit a value first.", "warn");
+    const patches = runsWithOld().map((r) => ({ off: r.off, old: bytesHex(r.old || []), new: bytesHex(r.bytes) }));
+    const mod = { format: "s4mod", version: 1, game: "SLUS-209.79",
+      note: "made with the web ISO editor", patchCount: patches.length, patches };
+    download(modBase() + ".s4mod", new Blob([JSON.stringify(mod, null, 1)], { type: "application/json" }));
+    setStatus(`Exported ${patches.length} patch run(s) as a .s4mod recipe.`, "ok");
+  }
+
+  function exportXdelta() {
+    if (!anyDirty()) return setStatus("No changes to export — edit a value first.", "warn");
+    if (!isoFile) return setStatus("The original ISO isn't available — reopen it and try again.", "err");
+    if (typeof Vcdiff === "undefined") return setStatus("VCDIFF module didn't load — reload the page.", "err");
+    const edits = allRuns().map((r) => ({ off: r.off, data: r.bytes }));
+    let patch;
+    try { patch = Vcdiff.buildXdelta(isoFile.size, edits); }
+    catch (e) { return setStatus("Couldn't build the xdelta patch: " + e.message, "err"); }
+    download(modBase() + ".xdelta", new Blob([patch], { type: "application/octet-stream" }));
+    const nb = edits.reduce((s, e) => s + e.data.length, 0);
+    setStatus(`Exported an .xdelta patch (${fmtSize(patch.length)}, ${nb} byte(s) changed). ` +
+      `Apply ONLY to a pristine NTSC-U SLUS-209.79 ISO — this patch has no integrity check, so a wrong or ` +
+      `already-modified source corrupts silently (use the .s4mod recipe for source-verified edits). ` +
+      `Apply with: xdelta3 -d -s "<pristine ISO>" file.xdelta out.iso`, "warn");
+  }
+
+  async function importRecipe(file) {
+    let mod;
+    try { mod = JSON.parse(await file.text()); } catch (e) { return setStatus("Not a valid recipe file.", "err"); }
+    if (mod.format !== "s4mod") return setStatus("Not an s4mod recipe.", "err");
+    if (mod.game && mod.game !== "SLUS-209.79") return setStatus("Recipe is for a different game/region.", "err");
+    const parsed = (mod.patches || []).map((p) => ({ off: +p.off, nb: hexBytes(p.new || ""), ob: p.old ? hexBytes(p.old) : null }));
+    if (parsed.some((p) => !winFor(p.off, p.nb.length)))
+      return setStatus(`This recipe changes byte(s) outside the region this editor can edit — nothing was applied.`, "err");
+    let applied = 0, mism = 0;
+    for (const p of parsed) {
+      const w = winFor(p.off, p.nb.length);
+      if (p.ob) for (let i = 0; i < p.ob.length; i++) if (w.buf[p.off - w.off + i] !== p.ob[i]) { mism++; break; }
+      w.buf.set(p.nb, p.off - w.off);
+      applied += p.nb.length;
+    }
+    render();
+    setStatus(`Applied recipe — ${applied} byte(s)${mism ? `, ${mism} run(s) didn't match the expected originals` : ""}. Review, then Save to write.`, mism ? "warn" : "ok");
+  }
+
+  // Apply an .xdelta: decode only the windows the patch touches (reading just their
+  // source segments from the disc), stage the exact changed bytes like any other edit.
+  // A patch changing bytes outside the editable windows is refused whole.
+  async function applyXdelta(file) {
+    if (!isoFile) return setStatus("Load an ISO first.", "err");
+    setStatus("Reading patch…", "");
+    try {
+      const patch = new Uint8Array(await file.arrayBuffer());
+      const wins = [];
+      const total = Vcdiff.eachWindow(patch, (w) => wins.push(w));
+      if (total !== isoFile.size)
+        return setStatus(`This patch builds a ${fmtSize(total)} file, but the loaded disc is ${fmtSize(isoFile.size)} — it was made for a different image.`, "err");
+      if (wins.some((w) => w.fromTarget))
+        return setStatus("This patch uses VCD_TARGET windows, which this editor can't apply. Apply it with xdelta3 instead.", "err");
+      const edits = [];
+      for (const w of wins) {
+        if (!w.plan().length) continue;
+        const src = new Uint8Array(await isoFile.slice(w.sourceStart, w.sourceStart + w.sourceLen).arrayBuffer());
+        const out = w.decode(src);
+        const cur = new Uint8Array(await isoFile.slice(w.targetStart, w.targetStart + w.targetLen).arrayBuffer());
+        for (let i = 0; i < out.length;) {
+          if (out[i] === cur[i]) { i++; continue; }
+          const from = i;
+          while (i < out.length && out[i] !== cur[i]) i++;
+          edits.push({ off: w.targetStart + from, bytes: out.subarray(from, i) });
+        }
+      }
+      if (!edits.length) return setStatus("This patch changes nothing on this disc — it may already be applied.", "warn");
+      const bad = edits.filter((e) => !winFor(e.off, e.bytes.length));
+      if (bad.length) {
+        const n = bad.reduce((a, e) => a + e.bytes.length, 0);
+        return setStatus(`This patch changes ${n} byte(s) outside the region this editor can edit ` +
+          `(first at 0x${bad[0].off.toString(16).toUpperCase()}) — nothing was applied. Apply it with xdelta3 instead: ` +
+          `xdelta3 -d -s "<pristine ISO>" patch.xdelta out.iso`, "err");
+      }
+      edits.forEach((e) => { const w = winFor(e.off, e.bytes.length); w.buf.set(e.bytes, e.off - w.off); });
+      const n = edits.reduce((a, e) => a + e.bytes.length, 0);
+      render();
+      setStatus(`Applied patch — ${n} byte(s) in ${edits.length} run(s), checksum-verified. Review, then Save to write.`, "ok");
+    } catch (e) {
+      setStatus(e.message || String(e), "err");
+    }
+  }
+
+  async function applyPatchFile(file) {
+    const head = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+    if (head[0] === 0xD6 && head[1] === 0xC3 && head[2] === 0xC4) return applyXdelta(file);
+    return importRecipe(file);
+  }
+
+  // ---- Changes: stock audit + restore-to-stock --------------------------------
+  function stockBytes(f) {
+    const b = new Uint8Array(f.len);
+    const dv = new DataView(b.buffer);
+    if (f.type === "bool") (f.offBytes || []).forEach((v, i) => dv.setUint8(i, v));
+    else f.write(dv, f.def);
+    return b;
+  }
+  function changesHtml() {
+    const rows = FIELDS.map((f) => {
+      const w = win(f.key); if (!w) return "";
+      const stock = stockBytes(f);
+      const isStock = stock.every((v, i) => v === w.buf[i]);
+      const cur = f.read(w.dv);
+      const state = isStock ? `<span class="pill on">stock</span>`
+        : `<span class="pill">patched: ${f.type === "bool" ? (cur ? "on" : "off") : cur + (f.type === "percent" ? "%" : "")}</span>`;
+      return `<div class="invrow"><span class="invname">${esc(f.label)}</span>
+        <span class="invctl">${state}
+        ${isStock ? "" : `<button type="button" class="chip mini" data-restore="${f.key}" title="stage the stock bytes">↺ restore</button>`}</span></div>`;
+    }).join("");
+    const anyPatched = FIELDS.some((f) => { const w = win(f.key); return w && !stockBytes(f).every((v, i) => v === w.buf[i]); });
+    return `<div class="card"><h3 class="sec">Changes on this disc</h3>
+      <div class="fnote">What is already patched on the loaded disc, checked against the stock bytes at each site.</div>
+      ${rows}
+      ${anyPatched ? `<div class="toolbar"><button id="isoRestoreAll">Restore all to stock</button></div>`
+                   : `<div class="fnote">This disc matches stock at every patch site.</div>`}
+    </div>`;
   }
 
   // ---- progress modal (ported from the S3 ISO editor) -------------------------

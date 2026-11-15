@@ -45,7 +45,12 @@ def build_payload():
     prog = SV.PROG_BASE                                      # roster 0 progression
     struct.pack_into("<I", b, prog + SV.OFF_PROG_EXP, 500)  # EXP
     b[prog + SV.OFF_PROG_WLVL] = 4                           # weapon level
+    for lv in range(4):                                      # rune uses per spell level
+        b[prog + SV.OFF_PROG_RUNE_USES + lv] = [3, 8, 0, 6][lv]      # remaining (array B)
+        b[prog + SV.OFF_PROG_RUNE_USES_MAX + lv] = [9, 8, 7, 6][lv]  # max (array A)
     b[SV.RECRUIT_BASE] = 10                                  # roster 0 = "Recruited"
+    for k, iid in enumerate([1, 1, 1, 26, 90]):              # bag: 3x Medicine, Green Bottle, God Hand
+        struct.pack_into("<I", b, SV.INVENTORY_OFF + 4 * k, iid)
     nm = "TESTHERO".encode("latin1")                        # hero name field
     off, n, _ = next((o, nn, lbl) for k, o, nn, lbl in SV.NAME_FIELDS if k == "hero")
     b[off:off + len(nm)] = nm
@@ -78,8 +83,11 @@ def main():
     check("STR stat decoded", c0["stats"]["STR"] == 58, str(c0["stats"]["STR"]))
     check("rune slot 0 decoded", c0["runes"][0] == 3, str(c0["runes"][0]))
     check("weapon level decoded", c0["weaponLvl"] == 4, str(c0["weaponLvl"]))
+    check("rune uses decoded", c0["runeUses"] == [3, 8, 0, 6] and c0["runeUsesMax"] == [9, 8, 7, 6],
+          "%s/%s" % (c0["runeUses"], c0["runeUsesMax"]))
     check("recruitment decoded", c0["recruited"] == 10, str(c0["recruited"]))
     check("hero name decoded", any(n["value"] == "TESTHERO" for n in s.get("names", [])))
+    check("inventory decoded", s["inventory"] == [1, 1, 1, 26, 90], str(s["inventory"]))
     check("checksum reported valid", s["checksumValid"] is True)
     check("container is a writable single-file", s["writable"] is True and s["container"] == "psu")
 
@@ -87,9 +95,11 @@ def main():
     res = SV.write_save_edits(
         path, s["folder"],
         char_edits={0: {"maxHP": 9999, "exp": 5000, "weaponLvl": 9, "recruited": 15,
+                        "runeUses": [9, 8, 7, 6],
                         "stats": {"STR": 250}, "runes": {0: 7}, "equip": {"head": 16}}},
         name_edits={"hero": "Zephon", "ship": "Basel"},
-        save_edits={"potch": 999999, "gameTime": 7200, "worldMapFull": 1},
+        save_edits={"potch": 999999, "gameTime": 7200, "worldMapFull": 1,
+                    "inventory": [1, 1, 44]},
         make_backup=False,
     )
     check("write reports ok", res.get("ok") is True, str(res))
@@ -107,10 +117,24 @@ def main():
     check("weapon level persisted", c2["weaponLvl"] == 9)
     check("STR persisted", c2["stats"]["STR"] == 250)
     check("rune persisted", c2["runes"][0] == 7)
+    check("rune uses refilled", c2["runeUses"] == [9, 8, 7, 6] and c2["runeUsesMax"] == [9, 8, 7, 6])
     check("equipment persisted", c2["equip"]["head"] == 16, str(c2["equip"]["head"]))
     check("recruitment persisted", c2["recruited"] == 15)
     check("hero name persisted", any(n["value"] == "Zephon" for n in s2.get("names", [])))
+    check("inventory persisted", s2["inventory"] == [1, 1, 44], str(s2["inventory"]))
     check("world map fully explored", s2["worldMapPct"] >= 99.0, str(s2["worldMapPct"]))
+
+    # --- inventory guard rails (refuse, never truncate or half-write) ---
+    print("Inventory guard rails:")
+    payload = build_payload()
+    _, ch = SV.apply_edits_to_gamedata(payload, save_edits={"inventory": [1] * (SV.INVENTORY_SLOTS + 1)})
+    check("oversize bag refused", ch == 0)
+    _, ch = SV.apply_edits_to_gamedata(payload, save_edits={"inventory": [SV.ITEM_ID_MAX + 1]})
+    check("out-of-range item id refused", ch == 0)
+    _, ch = SV.apply_edits_to_gamedata(payload, save_edits={"inventory": [1, 1, 1, 26, 90]})
+    check("unchanged bag is a no-op", ch == 0)
+    out, ch = SV.apply_edits_to_gamedata(payload, save_edits={"inventory": []})
+    check("bag can be emptied", ch == 1 and SV.decode_inventory(out) == [])
     check("checksum still valid after write", s2["checksumValid"] is True)
 
     # --- rejection path (what the web loader turns into a friendly message) ---

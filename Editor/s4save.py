@@ -132,6 +132,17 @@ RECRUIT_STATES = {0: "Not Recruited", 1: "In Your Company", 10: "Recruited",
 # never exceeds 15; hero EXP matches the on-screen level in save titles.
 PROG_BASE, PROG_STRIDE = 0x108, 0x78
 OFF_PROG_EXP, OFF_PROG_WLVL = 0x00, 0x04
+# Rune uses, per spell LEVEL (index 0..3 = levels 1..4): two 4-byte arrays in the
+# prog record. CORRECTED 2026-11-15 by code RE (lab reward_sites.md, Site 5): the
+# community CT labels had the arrays swapped. Array A at +0x49 is the MAX (capacity):
+# the game's refill routines (func_002B8DF8/EB8) copy A -> B for every character, and
+# the cast-availability gate reads A. Array B at +0x4D is the CURRENT (remaining):
+# the cast path's deduction (func_002BBA58, store at 0x2BBAD8) decrements B. Under
+# the corrected labels the old "anomaly" resolves: Lo Fong (Josh save) holds max 7,
+# current 4 at level 1 - a partially spent caster, exactly as expected. At-rest saves
+# hold A == B for ~70 rune-bearing characters because inns refill B from A.
+OFF_PROG_RUNE_USES, OFF_PROG_RUNE_USES_MAX = 0x4D, 0x49
+RUNE_LEVELS = 4
 EXP_MAX, WLVL_MAX = 98999, 15
 # Unite-attack levels: up to five u8 slots per character at P+0x65/67/69/6B/6D (0=locked,
 # 1..3 = unite level). Each combo's level is stored on ONE member's slot; the slot->combo
@@ -159,6 +170,18 @@ POTCH_OFF, POTCH_MAX = 0x3698, 99_999_999
 # Game time in seconds — u32 at gamedata 0x20 (body start). Verified: matches the H:MM
 # playtime in the save's icon.sys title exactly (e.g. 49783s = 13h49m = "013:49").
 GAMETIME_OFF = 0x20
+
+# Party bag (inventory) — u32 item ids at gamedata 0xCC24 (RAM 0x53F484), ONE SLOT PER
+# PHYSICAL ITEM: quantity is the slot count (a save holding 15 Medicines stores the id
+# 15 times). Located 2026-11-15 by save diffing: the s401->s402 diff rewrites one slot
+# in place (Soap -> Green Bottle) as the only bag change between two saves minutes
+# apart, and the array decodes to in-range item ids (1..518) packed from slot 0 with a
+# zero tail in all 16 real saves examined (NTSC + PAL, four playthroughs). The next
+# identified array starts at 0xCD50, so at most 75 slots fit; INVENTORY_SLOTS = 75 is
+# that bound (the ELF's own capacity check is being confirmed separately). Id 0 never
+# appears inside the used range — empty slots are a zero tail, never gaps.
+INVENTORY_OFF, INVENTORY_SLOTS = 0xCC24, 75
+ITEM_ID_MAX = 518
 OFF_STATS   = 0x94              # u16[8]: STR SKL MAG EVA PDF MDF SPD LUK
 STAT_NAMES  = ["STR", "SKL", "MAG", "EVA", "PDF", "MDF", "SPD", "LUK"]
 # NOT exposed, and why:
@@ -420,6 +443,8 @@ def decode_character(gamedata, roster_index):
         "recruitedName": RECRUIT_STATES.get(recruited, f"? ({recruited})"),
         "exp": struct.unpack_from("<I", gamedata, prog + OFF_PROG_EXP)[0],
         "weaponLvl": gamedata[prog + OFF_PROG_WLVL],
+        "runeUses": [gamedata[prog + OFF_PROG_RUNE_USES + lv] for lv in range(RUNE_LEVELS)],
+        "runeUsesMax": [gamedata[prog + OFF_PROG_RUNE_USES_MAX + lv] for lv in range(RUNE_LEVELS)],
         "unites": [gamedata[prog + o] for o in OFF_PROG_UNITES],
         "uniteNames": {s: v for s, v in UNITE_NAMES.get(roster_index, {}).items()},
         "rosterIndex": roster_index,
@@ -442,6 +467,21 @@ def decode_characters(gamedata):
     return [c for c in (decode_character(gamedata, i) for i in range(n)) if c]
 
 
+def decode_inventory(gamedata):
+    """The party bag as a list of item ids in slot order (empty tail dropped).
+    Stops at the first id outside 1..ITEM_ID_MAX so a corrupt or foreign payload
+    decodes to what is provably bag-shaped rather than guessing onward."""
+    out = []
+    for k in range(INVENTORY_SLOTS):
+        iid = struct.unpack_from("<I", gamedata, INVENTORY_OFF + 4 * k)[0]
+        if iid == 0:
+            continue
+        if iid > ITEM_ID_MAX:
+            break
+        out.append(iid)
+    return out
+
+
 def decode_save(gamedata):
     """Decode one save's gamedata payload (header + names + characters)."""
     names = [{"key": key, "label": label, "value": _read_str(gamedata, off, n), "max": n}
@@ -462,6 +502,7 @@ def decode_save(gamedata):
             f"<{WORLDMAP_WORDS}I", gamedata, WORLDMAP_OFF)) / (WORLDMAP_WORDS * 32), 1),
         "names": names,
         "characters": [c for c in decode_characters(gamedata) if c["hasData"]],
+        "inventory": decode_inventory(gamedata),
         "writable": True,
     }
 
@@ -485,6 +526,17 @@ def apply_edits_to_gamedata(gamedata, char_edits=None, name_edits=None, save_edi
     if save_edits and "gameTime" in save_edits:
         struct.pack_into("<I", b, GAMETIME_OFF, max(0, min(int(save_edits["gameTime"]), 999*3600)))
         changed += 1
+    if save_edits and "inventory" in save_edits:
+        # Full replacement list of item ids. Refuse (rather than truncate) a list
+        # that cannot fit or carries an out-of-range id — a half-written bag is
+        # exactly the failure this editor must never produce.
+        inv = [int(x) for x in (save_edits["inventory"] or [])]
+        if len(inv) <= INVENTORY_SLOTS and all(1 <= x <= ITEM_ID_MAX for x in inv):
+            if inv != decode_inventory(gamedata):
+                for k in range(INVENTORY_SLOTS):
+                    struct.pack_into("<I", b, INVENTORY_OFF + 4 * k,
+                                     inv[k] if k < len(inv) else 0)
+                changed += 1
     if save_edits and save_edits.get("worldMapFull"):
         # Mark the world map fully explored — the exact write the game's own cheat-table
         # helper performs (0xFFFFFFFF into each of the 373 flag words).
@@ -533,6 +585,14 @@ def apply_edits_to_gamedata(gamedata, char_edits=None, name_edits=None, save_edi
                                  max(0, min(int(v), EXP_MAX))); changed += 1
             elif k == "weaponLvl":
                 b[PROG_BASE + int(ridx) * PROG_STRIDE + OFF_PROG_WLVL] = max(0, min(int(v), WLVL_MAX))
+                changed += 1
+            elif k == "runeUses":
+                # v is the 4 remaining-use counts (levels 1..4), written to array B.
+                # (Local named ubase: plain `base` is the char-record base this loop
+                # still needs for the stats/runes/equip branches.)
+                ubase = PROG_BASE + int(ridx) * PROG_STRIDE + OFF_PROG_RUNE_USES
+                for lv in range(RUNE_LEVELS):
+                    b[ubase + lv] = _clamp((v or [0] * RUNE_LEVELS)[lv], 1)
                 changed += 1
             elif k == "recruited":
                 # Recruitment byte lives OUTSIDE the 0xF0 record, at 0x164 + idx*0x78.

@@ -18,7 +18,7 @@ const GEAR_LABELS = { head: "Head", body: "Body", hands: "Hands", feet: "Feet",
                       acc1: "Accessory 1", acc2: "Accessory 2", acc3: "Accessory 3" };
 const CHAR_CAP = { maxHP: 9999, exp: 98999, weaponLvl: 15 };
 const POTCH_MAX = 99999999;
-const APP_VERSION = "1.6.5";        // keep in lockstep with the footer in index.html
+const APP_VERSION = "1.7.0";        // keep in lockstep with the footer in index.html
 // Elemental rune affinity reference (s4_affinities.json) — teaches which runes suit a unit.
 const AFF_ELEMS = ["Fire", "Lightning", "Water", "Wind", "Earth"];
 const AFF_RATE = { 1: "poor", 2: "average", 3: "good", 4: "excellent" };
@@ -268,7 +268,8 @@ async function pickupSharedFile() {
 // ---- top-level editor render ----------------------------------------------
 // Per-slot staged edits (reset when switching slots). Only *touched* fields are staged,
 // so the review list and the write are minimal.
-let CE, NAMES, SAVEDITS, SEARCH, RECRUITED_ONLY, SUB;
+let CE, NAMES, SAVEDITS, SEARCH, RECRUITED_ONLY, SUB, INV;
+const INV_SLOTS = 75;   // party-bag capacity — mirrors INVENTORY_SLOTS in s4save.py
 
 function renderEditor() {
   const ed = $("#editor");
@@ -285,6 +286,7 @@ function renderEditor() {
 function drawSlot() {
   const s = saves[curSlot];
   CE = {}; NAMES = {}; SAVEDITS = {}; SEARCH = ""; RECRUITED_ONLY = false; SUB = "chars";
+  INV = (s.inventory || []).slice();
 
   const cksum = s.checksumValid ? `<span class="pill on">checksum ok</span>` : `<span class="pill">checksum off</span>`;
   const metaBits = [
@@ -334,6 +336,8 @@ function drawSlot() {
       <div class="subtabs">
         <button class="chip" data-sub="chars">Characters (${total})</button>
         <button class="chip" data-sub="recruit">Recruit (${live})</button>
+        <button class="chip" data-sub="party">Party (${(s.characters || []).filter((c) => [11, 15].includes(c.recruited || 0)).length}/4)</button>
+        <button class="chip" data-sub="items">Items (${(s.inventory || []).length}/${INV_SLOTS})</button>
       </div>
       <input class="search" id="sq" placeholder="filter by name or #…">
       <div class="muted" id="subhint" style="margin:2px 0 10px"></div>
@@ -388,7 +392,16 @@ function drawSlot() {
 function showSub() {
   $$("[data-sub]").forEach((b) => b.classList.toggle("on", b.dataset.sub === SUB));
   const hint = $("#subhint");
-  if (SUB === "recruit") {
+  if (SUB === "party") {
+    if (hint) hint.innerHTML = `The battle party: the hero plus three. Membership is the game's own ` +
+      `recruitment flag; the order shown is roster order, as the save records no separate slot order. ` +
+      `Changes are staged until you Apply.`;
+    drawParty();
+  } else if (SUB === "items") {
+    if (hint) hint.innerHTML = `The party bag. Every item takes one slot — a count of 15 means 15 slots — ` +
+      `and the bag holds ${INV_SLOTS}. Changes are staged until you Apply.`;
+    drawItems();
+  } else if (SUB === "recruit") {
     if (hint) hint.innerHTML = `Set each character's recruitment status in one place — the exact per-character flag the game checks. ` +
       `<b>Recruiting a character the story hasn't unlocked yet can soft-lock an early save</b> — keep a backup. Changes are staged until you Apply.`;
     drawRecruit();
@@ -398,6 +411,75 @@ function showSub() {
     drawChars();
     const rc = $("#reconly"); if (rc) rc.onchange = (e) => { RECRUITED_ONLY = e.target.checked; drawChars(); };
   }
+}
+
+// ---- Party -------------------------------------------------------------------
+function drawParty() {
+  const s = saves[curSlot];
+  const inParty = (s.characters || []).filter((c) => [11, 15].includes(recOf(c)));
+  const rows = inParty.map((c) => {
+    const leader = recOf(c) === 15;
+    return `<tr><td>${esc(c.name)}</td><td class="sl">#${c.rosterIndex}</td>
+      <td>${leader ? `<span class="pill on">Leader</span>` : `<span class="pill">In Party</span>`}</td>
+      <td>${leader ? `<span class="muted">stays</span>` : `<button type="button" class="chip mini" data-partyout="${c.rosterIndex}">Remove</button>`}</td></tr>`;
+  }).join("") || `<tr><td colspan="4" class="muted">no party members found</td></tr>`;
+  const eligible = (s.characters || []).filter((c) => recOf(c) === 10);
+  const addRow = inParty.length >= 4
+    ? `<div class="fnote" style="margin-top:10px">Party is full (4) — remove someone before adding.</div>`
+    : `<div class="row" style="gap:6px;margin-top:10px"><select id="partyAddSel" style="max-width:260px">
+         ${eligible.map((c) => `<option value="${c.rosterIndex}">${esc(c.name)}</option>`).join("")}
+       </select><button type="button" class="chip" id="partyAddBtn" ${eligible.length ? "" : "disabled"}>Add to party</button></div>
+       ${eligible.length ? "" : `<div class="fnote">No recruited characters are waiting — recruit someone first.</div>`}`;
+  $("#subview").innerHTML = `
+    <table class="invtbl"><thead><tr><th>Character</th><th>#</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    ${addRow}`;
+  $$("[data-partyout]").forEach((b) => (b.onclick = () => {
+    ce(+b.dataset.partyout).recruited = 10; refreshDirty(); drawParty();
+  }));
+  const ab = $("#partyAddBtn");
+  if (ab) ab.onclick = () => {
+    const sel = $("#partyAddSel"); if (!sel) return;
+    ce(+sel.value).recruited = 11; refreshDirty(); drawParty();
+  };
+}
+
+// ---- Inventory ---------------------------------------------------------------
+function invSync() {
+  const orig = saves[curSlot].inventory || [];
+  const same = INV.length === orig.length && INV.every((v, i) => v === orig[i]);
+  if (same) delete SAVEDITS.inventory; else SAVEDITS.inventory = INV.slice();
+  refreshDirty();
+}
+
+function drawItems() {
+  const host = $("#subview"); if (!host) return;
+  const order = [], count = {};
+  INV.forEach((id) => { if (!(id in count)) { count[id] = 0; order.push(id); } count[id]++; });
+  const q = SEARCH || "";
+  const rows = order.filter((id) => !q || itemLabel(id).toLowerCase().includes(q)).map((id) => `
+    <div class="invrow">
+      <span class="invname">${esc(itemLabel(id))}</span>
+      <span class="invctl">
+        <button type="button" class="chip mini" data-inv-dec="${id}" title="one less">−</button>
+        <span class="invqty">×${count[id]}</span>
+        <button type="button" class="chip mini" data-inv-inc="${id}" title="one more">+</button>
+        <button type="button" class="chip mini" data-inv-del="${id}" title="remove all">✕</button>
+      </span>
+    </div>`).join("");
+  const full = INV.length >= INV_SLOTS;
+  host.innerHTML = `
+    <div class="invhead"><span>${INV.length} of ${INV_SLOTS} slots used</span>
+      <button type="button" class="chip" id="invAdd" ${full ? "disabled" : ""}>+ Add item…</button></div>
+    ${rows || `<div class="muted">Nothing matches — the bag is empty, or the filter hides it.</div>`}
+    ${full ? `<div class="fnote">Bag is full — remove something before adding.</div>` : ""}`;
+  const redraw = () => { invSync(); drawItems(); };
+  $$("[data-inv-inc]").forEach((b) => (b.onclick = () => { if (INV.length < INV_SLOTS) { INV.push(+b.dataset.invInc); redraw(); } }));
+  $$("[data-inv-dec]").forEach((b) => (b.onclick = () => { const i = INV.indexOf(+b.dataset.invDec); if (i >= 0) { INV.splice(i, 1); redraw(); } }));
+  $$("[data-inv-del]").forEach((b) => (b.onclick = () => { INV = INV.filter((x) => x !== +b.dataset.invDel); redraw(); }));
+  const add = $("#invAdd");
+  if (add) add.onclick = () => openPicker("Add item", REF.items, 0, (id) => {
+    if (id && INV.length < INV_SLOTS) { INV.push(id); redraw(); }
+  });
 }
 
 // ---- Characters ------------------------------------------------------------
@@ -465,6 +547,11 @@ function charCard(c) {
     return `<label class="field"><span>Rune ${slot + 1}</span>
       <button type="button" class="picker" data-runeri="${ri}" data-runeslot="${slot}" data-val="${cur}" data-def="${cur}">${esc(runeLabel(cur))}</button></label>`;
   }).join("");
+  const usesArr = c.runeUses || [0, 0, 0, 0], maxArr = c.runeUsesMax || [0, 0, 0, 0];
+  const uses = `<div class="field"><span>Rune uses by spell level <button type="button" class="chip mini" data-refill="${ri}" title="stage a refill to max on every level">refill</button></span>
+      <span class="row" style="gap:8px;align-items:center;flex-wrap:wrap">${[0, 1, 2, 3].map((lv) =>
+        `<span class="muted">Lv${lv + 1}</span> <input type="number" min="0" max="255" value="${usesArr[lv] || 0}" data-ru="${lv}" data-def="${usesArr[lv] || 0}" title="remaining uses, spell level ${lv + 1}"><span class="muted">/ ${maxArr[lv] || 0}</span>`).join("")}</span>
+      <span class="fnote">remaining / max per level; inns refill remaining to max</span></div>`;
 
   const equip = EQUIP_SLOTS.map(([key]) => {
     const cur = (c.equip || {})[key] || 0;
@@ -501,7 +588,7 @@ function charCard(c) {
         <button type="button" class="chip mini" data-preset="${ri}" title="stage max stats, HP, level, weapon Lv and all unites for review">★ Max out</button></div>
       <h4>Core</h4><div class="grid">${core}</div>
       <h4>Stats</h4><div class="grid">${stats}</div>
-      <h4>Runes</h4><div class="grid eq">${runes}</div>
+      <h4>Runes</h4><div class="grid eq">${runes}${uses}</div>
       ${affNote}
       ${unites}
       <h4>Equipment</h4><div class="grid eq">${equip}</div>
@@ -533,6 +620,22 @@ function wireChar(c) {
     if (expIn) { expIn.value = exp; expIn.classList.toggle("dirty", String(exp) !== expIn.dataset.def); }
     ce(ri).exp = exp;
     lvIn.classList.toggle("dirty", lvIn.value !== lvIn.dataset.def); refreshDirty();
+  };
+  // rune uses per spell level — staged as one 4-array (array B, remaining counts)
+  $$("input[data-ru]", body).forEach((inp) => (inp.onchange = () => {
+    const arr = (ce(ri).runeUses = ce(ri).runeUses || [...(c.runeUses || [0, 0, 0, 0])]);
+    arr[+inp.dataset.ru] = +inp.value;
+    inp.classList.toggle("dirty", inp.value !== inp.dataset.def); refreshDirty();
+  }));
+  // refill — stages remaining := max on every level
+  const rf = $(`button[data-refill="${ri}"]`, body);
+  if (rf) rf.onclick = () => {
+    const maxes = c.runeUsesMax || [0, 0, 0, 0];
+    $$("input[data-ru]", body).forEach((inp) => {
+      inp.value = maxes[+inp.dataset.ru] || 0;
+      inp.classList.toggle("dirty", inp.value !== inp.dataset.def);
+    });
+    ce(ri).runeUses = [...maxes]; refreshDirty();
   };
   // runes
   $$("button.picker[data-runeri]", body).forEach((btn) => (btn.onclick = () => {
@@ -607,6 +710,14 @@ function buildDiff() {
   if ("potch" in SAVEDITS && SAVEDITS.potch !== s.potch) rows.push({ g: "Save", t: `Potch: ${s.potch} → ${SAVEDITS.potch}` });
   if ("gameTime" in SAVEDITS && SAVEDITS.gameTime !== s.gameTimeSec) rows.push({ g: "Save", t: `Game time: ${gtLabel(s.gameTimeSec)} → ${gtLabel(SAVEDITS.gameTime)}` });
   if (SAVEDITS.worldMapFull) rows.push({ g: "Save", t: `World map → mark fully explored` });
+  if (SAVEDITS.inventory) {
+    const tally = (list) => { const m = {}; (list || []).forEach((id) => (m[id] = (m[id] || 0) + 1)); return m; };
+    const before = tally(s.inventory), after = tally(SAVEDITS.inventory);
+    [...new Set([...Object.keys(before), ...Object.keys(after)])].map(Number)
+      .filter((id) => (before[id] || 0) !== (after[id] || 0))
+      .sort((a, b) => a - b)
+      .forEach((id) => rows.push({ g: "Items", t: `${itemLabel(id)}: ×${before[id] || 0} → ×${after[id] || 0}` }));
+  }
 
   Object.entries(NAMES).forEach(([k, v]) => {
     const n = (s.names || []).find((x) => x.key === k);
@@ -622,6 +733,7 @@ function buildDiff() {
       else if (k === "unites") Object.entries(v).forEach(([slot, nv]) => { const old = (c.unites || [])[+slot] || 0; if (nv !== old) { const un = (c.uniteNames || {})[slot]; rows.push({ g: who, t: `Unite ${un ? un.name : "#" + slot}: ${old} → ${nv}` }); } });
       else if (k === "exp") { if (v !== c.exp) rows.push({ g: who, t: `Level ${lvFromExp(c.exp)} → ${lvFromExp(v)} (EXP ${c.exp} → ${v})` }); }
       else if (k === "weaponLvl") { if (v !== c.weaponLvl) rows.push({ g: who, t: `Weapon Lv: ${c.weaponLvl} → ${v}` }); }
+      else if (k === "runeUses") { (v || []).forEach((n, lv) => { const o = (c.runeUses || [])[lv] || 0; if (n !== o) rows.push({ g: who, t: `Rune uses Lv${lv + 1}: ${o} → ${n}` }); }); }
       else if (k === "maxHP") { if (v !== c.maxHP) rows.push({ g: who, t: `Max HP: ${c.maxHP} → ${v}` }); }
       else if (k === "recruited") { if (v !== c.recruited) rows.push({ g: who, t: `Recruitment: ${recName(c.recruited)} → ${recName(v)}` }); }
     });
