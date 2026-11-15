@@ -174,10 +174,45 @@ BI2 (60MB) has 55 real entries; many appear as a 256-byte header entry (flags 0)
 immediately followed by a flags=2 data entry — a header+compressed-payload pairing.
 `FILEDATA.BIN` is unrelated (starts with a copy of SYSTEM.CNF text).
 
-STATUS: container format decoded; the per-entry compression (flags=2) and which entry
-holds character/item/spell tables are not yet mapped. Editing needs: identify the target
-entry, decompress it, edit, recompress, fix offsets/sizes. Deferred — big effort, and the
-save editor already covers character/rune/equipment editing for existing playthroughs.
+> **Superseded 2026-11-15** (the two claims above; original kept per #33): the
+> "55 real entries" are only the FIRST archive's table in BI2 — each FILEDATA
+> file is a run of back-to-back archives. And `FILEDATA.BIN` is NOT unrelated:
+> it holds the same archives in six runs. Full verified census in the next
+> section. The "flags=2 means compressed" reading is also in doubt (#46):
+> sampled flags=2 payloads have a stored/compressed ratio of ~1.00x.
+
+## FILEDATA census — verified 2026-11-15 (#44, extends #31)
+
+Measured on the pristine NTSC-U disc by `Editor/build_s4_subfile_index.py`
+(index: `Editor/s4_subfile_index.json`; invariants asserted by
+`web/tests/subfile-index.mjs`). Every count below is exact, zero exceptions.
+
+| File | Archives | Entries | Flags 0 / 2 / 3 | Chain end |
+|---|---|---|---|---|
+| `FILEDATA.BI2` | 259 | 4,537 | 3,840 / 697 / 0 | last archive ends 2,048 bytes early |
+| `FILEDATA.BI1` | 1,066 | 57,771 | 37,095 / 20,456 / 220 | ends on the file's exact final byte |
+| `FILEDATA.BIN` | 1,520 | 52,461 | 33,505 / 18,788 / 168 | ends on the file's exact final byte |
+| **Total** | **2,845** | **114,769** | | |
+
+- BI1/BI2 chains tile perfectly from offset 0 (258/258 and 1065/1065
+  consecutive pairs, `next = offset + align2048(total)`). Issue #44 said
+  260 BI2 archives / 1,326 total; the chain walk and a full magic scan
+  both find 259 in BI2 — the extra was the trailing sector (next point).
+- BI2's final 2,048-byte sector is not zero padding: it holds a copy of
+  the SYSTEM.CNF text (54 non-zero bytes). That same stamp at the head of
+  `FILEDATA.BIN` is what made BIN look unrelated; BIN's archive runs start
+  at 2,490,368 and cover 1,026 MB of its 1,078 MB in 6 runs (the big run:
+  1,446 archives / 45,367 entries from 115,269,632). The 6 non-archive
+  gaps total 52,015,104 bytes and are recorded in the index.
+- Every entry offset in all three files is 16-byte aligned
+  (114,769/114,769). The #45 "+16 rule" for flags=2 entries holds across
+  all three files: 39,000/39,000 (690 BI2 + 20,140 BI1 + 18,170 BIN).
+- flags=3 exists in BIN too (168 entries), not just BI1 (220).
+
+STATUS: container format decoded and now indexed end to end. Which entry
+holds the character/item/spell tables is the remaining question (#47);
+the first fingerprint sweep is recorded in the PS2 RE lab writeup
+(`~/workspace/ps2-re/games/suikoden4/FILEDATA.md`).
 
 ## Recruitment flags — CRACKED (write-enabled)
 **Recruited[i] = gamedata `0x164 + rosterIndex*0x78` (one byte per character).**
