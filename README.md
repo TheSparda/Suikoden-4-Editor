@@ -22,7 +22,8 @@ checksum are identical across regions, and each save shows a region badge. (ISO 
 NTSC-U only.)
 
 > This project was formerly **Suikoden-4-Save-Editor**; it outgrew the name once the disc
-> editor landed. Old links redirect here.
+> editor landed. Old GitHub links redirect here, but the old web address does not carry
+> over, so use the link above.
 > Full UI walkthrough, install/offline details, and the Android flow are in
 > [`web/README.md`](web/README.md).
 
