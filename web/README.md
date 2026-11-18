@@ -1,16 +1,18 @@
-# Suikoden IV Save Editor — Web (Pyodide + PWA)
+# Suikoden 4 Editor, Web (Pyodide + PWA)
 
 A browser build of the editor. Open a save (or your ISO), edit it, and write it back —
 **entirely on your device**. Nothing is uploaded. It installs to an Android/desktop home
 screen and works offline after the first load.
 
-Live: **https://thesparda.github.io/Suikoden-4-Save-Editor/web/**
+Live: **https://thesparda.github.io/Suikoden-4-Editor/web/**
 
 Three tabs:
 
 - **Save Editor** — full parity with the desktop tool (runs the real `s4save.py` in Pyodide).
-- **ISO Editor** — direct disc edits (encounter rate + code toggles), written in place on
-  desktop or streamed as a patched copy on Android.
+- **ISO Editor** — direct disc edits in two tabs: **Patches** (encounter rate, battle
+  toggles, infinite item use, free rune casting, mod recipes) and **Files** (a browser for
+  the disc's FILEDATA archives). Written in place on desktop or streamed as a patched
+  copy on Android.
 - **Reference** — browse the 113 characters, 519 items, 42 runes, and rune affinities.
 
 ---
@@ -25,8 +27,8 @@ back out for saving. All format sniffing, checksums (CRC32 + reversed MD5) and P
 memory-card ECC are handled by the Python module — nothing is re-implemented in JS.
 
 **Layout** mirrors the desktop editor: a persistent **Overview** card (region · checksum ·
-recruited count, Names, Potch, game time, world-map "mark fully explored") above a subtab
-card:
+recruited count · health lint, Names, Potch, game time, world-map "mark fully explored",
+ship upgrade stats, and save/edits JSON snapshots) above a subtab card:
 
 - **Characters** — one card per character: recruitment status, Level/EXP, weapon level, Max
   HP, the eight stats, three rune slots, unite-attack levels, and seven equipment slots.
@@ -36,10 +38,18 @@ card:
   - **★ Max out** preset per character (stats, HP, level, weapon Lv, unites) — staged and
     reviewable.
 - **Recruit** — a filterable table of every character with a recruitment-status dropdown
-  per row, to set recruitment in bulk (with a soft-lock warning).
+  per row, a live recruited counter, and Recruit all / Unrecruit all bulk actions (with a
+  soft-lock warning).
+- **Party** — everyone carrying the In Party flag, with add/remove (no cap: support and
+  ship roles share the flag in genuine late-game saves).
+- **Items** — the party bag (75 slots, one slot per physical item): add/remove/restock by
+  name, with refusal (never truncation) for oversize or out-of-range changes.
 
 Plus a **max** button on Potch. Every edit is **staged**, shown in an **old → new review**
-before it's written, and highlighted as unsaved.
+before it's written, and highlighted as unsaved. **Undo / redo** (buttons or Ctrl+Z /
+Ctrl+Y) walks the staged-edit history. A **health lint** runs on every load and flags
+checksum failures, unknown recruitment values, out-of-range bag ids, and rune uses above
+max in plain language.
 
 **Save paths:** download the edited copy everywhere; **save in place** to the original file
 on desktop Chromium (File System Access); **Apply & share…** to another app on Android.
@@ -76,6 +86,19 @@ held in memory, and verifies the **NTSC-U (SLUS-209.79)** signature before allow
   enemies weaker than your party, party-wide) *without equipping the rune*.
 - **Turn off random battles completely** — no random encounters anywhere (stronger than the
   Champion's Rune, which only stops weaker enemies).
+
+**Items and Battle** patches:
+
+- **Infinite item use** — items are not consumed when used (NOP the item-count load on
+  the use path; the community trainer patch, verified unique on the disc).
+- **Free rune casting** — casting never spends a rune use; the cast path's deduction call
+  is NOP'd (located by static RE of the game's own code).
+
+A **Changes** card shows what is already patched on the opened disc, with per-patch
+restore-to-stock and restore-all. Patch sets can be shared as **.s4mod** recipes or
+**.xdelta** files (import validates every change against the known patch windows first).
+The **Files** tab browses the disc's FILEDATA containers from the repo's index
+(2,845 archives, 114,769 entries): pick a container and archive, filter entries by id.
 
 Every change is confirmed in an **old → new review** first.
 
@@ -141,6 +164,10 @@ npm test
   affinity data + coverage; version lockstep.
 - `save_roundtrip.py` — imports the **real** `s4save` and drives a synthetic payload through
   decode → edit → write → re-decode, asserting checksum + ECC. Skips cleanly without Python.
+- `subfile-index.mjs` — validates the FILEDATA index against the engine's own format rules.
+- `vcdiff.mjs` — xdelta encode/decode round-trips for the patch-sharing module.
+- `stock-restore.mjs` — verifies every ISO patch site's stock bytes against a pristine
+  disc (skips cleanly when no disc is present).
 
 ## Android / emulator flow
 

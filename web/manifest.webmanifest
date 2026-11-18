@@ -1,7 +1,7 @@
 {
-  "name": "Suikoden IV Save Editor",
-  "short_name": "S4 Save Editor",
-  "description": "Edit Suikoden IV (PS2) saves entirely on your device — recruitment, stats, runes, unites, equipment, names, Potch and more.",
+  "name": "Suikoden 4 Editor",
+  "short_name": "S4 Editor",
+  "description": "Edit Suikoden IV (PS2) saves and the game disc entirely on your device — recruitment, stats, runes, unites, equipment, ships, names, Potch, ISO patches and more.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

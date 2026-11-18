@@ -1,4 +1,4 @@
-// Suikoden IV ISO Editor — client-side, in-place, no upload.
+// Suikoden 4 ISO Editor — client-side, in-place, no upload.
 //
 // The save editor edits a tiny save wholesale in Pyodide; the ISO is ~4.36 GB and can't live
 // in memory. But the only edits we expose are a handful of 4-byte code patches in the boot ELF.
@@ -106,6 +106,10 @@
   let isoHandle = null, isoName = "", isoFile = null;
   let WINDOWS = {};        // key -> {off, len, buf, orig, dv, odv}
   let inited = false, saveNudged = false;
+  // Tab shell: Patches (the FIELDS editors) / Files
+  // (the FILEDATA sub-file browser over Editor/s4_subfile_index.json).
+  let VIEW = "patches";
+  let IDX = null, IDX_C = "FILEDATA.BI2", IDX_A = 0, IDX_Q = "";
 
   const win = (k) => WINDOWS[k];
   const fmtSize = (n) => n >= 1e9 ? (n / 1e9).toFixed(2) + " GB" : n >= 1e6 ? (n / 1e6).toFixed(1) + " MB" : Math.round(n / 1e3) + " KB";
@@ -223,8 +227,61 @@
     showRecent();
   }
 
+  function tabsHtml() {
+    return `<div class="subtabs" style="margin-bottom:10px">
+      <button class="chip${VIEW === "patches" ? " on" : ""}" data-isoview="patches">Patches</button>
+      <button class="chip${VIEW === "files" ? " on" : ""}" data-isoview="files">Files</button>
+    </div>`;
+  }
+  function wireTabs() {
+    $$("[data-isoview]").forEach((b) => (b.onclick = () => { VIEW = b.dataset.isoview; render(); }));
+  }
+
+  // ---- Files view (FILEDATA sub-file browser) ----------------------------------
+  async function loadIdx() {
+    try { IDX = await (await fetch(`${EDITOR_DIR}/s4_subfile_index.json`)).json(); }
+    catch (e) { IDX = { error: String(e) }; }
+    if (VIEW === "files") render();
+  }
+  function filesHtml() {
+    if (!IDX) { loadIdx(); return `<div class="card"><span class="muted">Loading the FILEDATA index (5.9 MB, once)…</span></div>`; }
+    if (IDX.error) return `<div class="card"><span class="status err">Index failed to load: ${esc(IDX.error)}</span></div>`;
+    const names = Object.keys(IDX.files);
+    const cont = IDX.files[IDX_C] || IDX.files[names[0]];
+    IDX_A = Math.max(0, Math.min(IDX_A, cont.archives.length - 1));
+    const arch = cont.archives[IDX_A];
+    const totalEntries = cont.archives.reduce((n, a) => n + a.entries.length, 0);
+    const q = IDX_Q.trim().toLowerCase();
+    const rows = arch.entries.filter((e) => !q || String(e.id) === q || e.id.toString(16) === q.replace(/^0x/, ""));
+    return `<div class="card">
+      <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+        <select id="idxC">${names.map((n) => `<option${n === IDX_C ? " selected" : ""}>${n}</option>`).join("")}</select>
+        <span class="muted">${cont.archives.length} archives · ${totalEntries} entries · LBA ${cont.lba}</span>
+      </div>
+      <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
+        <button type="button" class="chip mini" id="idxPrev">← Prev archive</button>
+        <span>Archive <input type="number" id="idxA" min="0" max="${cont.archives.length - 1}" value="${IDX_A}" style="width:80px"> of ${cont.archives.length - 1}</span>
+        <button type="button" class="chip mini" id="idxNext">Next archive →</button>
+        <span class="muted">disc offset ${arch.offset} · total size ${arch.total}</span>
+      </div>
+      <input class="search" id="idxQ" placeholder="filter entries by id (decimal or hex)…" value="${esc(IDX_Q)}" style="margin-top:8px">
+      <table class="invtbl" style="margin-top:8px"><thead><tr><th>Entry id</th><th>Flags</th><th>Offset</th><th>Size</th></tr></thead>
+      <tbody>${rows.slice(0, 1000).map((e) => `<tr><td class="sl">${e.id} (0x${e.id.toString(16).toUpperCase()})</td><td>${e.flags}</td><td>${e.offset}</td><td>${e.size}</td></tr>`).join("") || `<tr><td colspan="4" class="muted">no matching entries</td></tr>`}</tbody></table>
+      ${rows.length > 1000 ? `<div class="fnote">Showing the first 1000 of ${rows.length} entries.</div>` : ""}
+    </div>`;
+  }
+  function wireFiles() {
+    const c = $("#idxC"); if (c) c.onchange = () => { IDX_C = c.value; IDX_A = 0; render(); };
+    const a = $("#idxA"); if (a) a.onchange = () => { IDX_A = Math.max(0, +a.value || 0); render(); };
+    const p = $("#idxPrev"); if (p) p.onclick = () => { IDX_A = Math.max(0, IDX_A - 1); render(); };
+    const n = $("#idxNext"); if (n) n.onclick = () => { IDX_A = IDX_A + 1; render(); };
+    const q = $("#idxQ");
+    if (q) q.oninput = () => { IDX_Q = q.value; const pos = q.selectionStart; render(); const nq = $("#idxQ"); if (nq) { nq.focus(); nq.setSelectionRange(pos, pos); } };
+  }
+
   function render() {
     if (!Object.keys(WINDOWS).length) return;
+    if (VIEW === "files") { $("#isoEditor").innerHTML = tabsHtml() + filesHtml(); wireTabs(); wireFiles(); return; }
     const groups = {};
     FIELDS.forEach((f) => (groups[f.group] = groups[f.group] || []).push(f));
     const mode = saveMode();
@@ -240,7 +297,7 @@
       </div>`;
     }).join("");
 
-    $("#isoEditor").innerHTML = groupHtml + changesHtml() + `
+    $("#isoEditor").innerHTML = tabsHtml() + groupHtml + changesHtml() + `
       <div class="card">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
           <button class="chip" id="isoPnach">⧉ Copy pnach line</button>
@@ -277,6 +334,7 @@
     }));
     const ra = $("#isoRestoreAll");
     if (ra) ra.onclick = () => { FIELDS.forEach((f) => { const w = win(f.key); if (w) w.buf.set(stockBytes(f)); }); render(); };
+    wireTabs();
   }
 
   function fieldHtml(f) {

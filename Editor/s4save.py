@@ -123,7 +123,8 @@ OFF_MAXHP   = 0x92              # u16 max HP
 RECRUIT_BASE   = 0x164
 RECRUIT_STRIDE = 0x78
 RECRUIT_STATES = {0: "Not Recruited", 1: "In Your Company", 10: "Recruited",
-                  11: "In Party", 15: "Permanently In Party"}
+                  11: "In Party", 15: "Permanently In Party",
+                  8: "State 8 (seen in a real save, meaning unconfirmed)"}
 
 # Progression record — same 0x78-stride family as the recruit byte (recruited = +0x5C):
 #   P[i] = 0x108 + i*0x78:  +0x00 u32 EXP (game cap 98999 — the pnach "Max EXP" value,
@@ -482,6 +483,54 @@ def decode_inventory(gamedata):
     return out
 
 
+# Naval (ship) upgrade stats — from the community cheat tables, verified against
+# real saves 2026-11-15: four 0x20-byte ship records at 0xD4E2, each holding u16
+# Shooting Distance / Armoring / Mobility / Remaining Points at +0/+2/+4/+6 (the
+# rest of each record is other ship state). A late-game save (Brian 11251) shows
+# all four ships upgraded (range 7..13, armor 31..36) with 0 points left; an
+# early save shows ship 1 barely touched and ships 2..4 at zero.
+SHIPS_OFF, SHIP_STRIDE, SHIP_COUNT = 0xD4E2, 0x20, 4
+SHIP_FIELDS = (("range", 0x00), ("armor", 0x02), ("mobility", 0x04), ("points", 0x06))
+SHIP_NAMES = ("Ship 1", "Ship 2", "Ship 3 (Gaien)", "Ship 4 (Obel)")
+
+
+def decode_ships(gamedata):
+    return [{name: struct.unpack_from("<H", gamedata, SHIPS_OFF + i * SHIP_STRIDE + fo)[0]
+             for name, fo in SHIP_FIELDS} for i in range(SHIP_COUNT)]
+
+
+def lint_save(gamedata, dec):
+    """Health checks over a decoded save. Returns [{level, msg}] with level in
+    error/warn/info. Only flags states the game itself would not produce."""
+    out = []
+    if not dec["checksumValid"]:
+        out.append({"level": "error", "msg": "Checksum does not validate; the game may reject this save."})
+    bad_rec = [c["name"] for c in dec["characters"] if c["recruited"] not in RECRUIT_STATES]
+    if bad_rec:
+        out.append({"level": "warn", "msg": f"{len(bad_rec)} character(s) hold an unknown recruitment value (first: {bad_rec[0]})."})
+    # NOTE: the 11/15 flag count is NOT capped at 4 in genuine saves (a late-game
+    # save holds 10: support and ship roles share the flag), so no party-size
+    # check belongs here. The one hard invariant is the hero's permanent flag.
+    hero = next((c for c in dec["characters"] if c["rosterIndex"] == 0), None)
+    if hero is not None and hero["recruited"] != 15:
+        out.append({"level": "warn", "msg": "The hero does not hold the permanent-party flag (15)."})
+    raw_bag = [struct.unpack_from("<I", gamedata, INVENTORY_OFF + 4 * k)[0] for k in range(INVENTORY_SLOTS)]
+    bad_bag = [x for x in raw_bag if x > ITEM_ID_MAX]
+    if bad_bag:
+        out.append({"level": "error", "msg": f"Bag holds {len(bad_bag)} slot(s) with an out-of-range item id (first: {bad_bag[0]})."})
+    for c in dec["characters"]:
+        over = [lv for lv in range(RUNE_LEVELS) if c["runeUses"][lv] > c["runeUsesMax"][lv]]
+        if over:
+            out.append({"level": "warn", "msg": f"{c['name']} holds more remaining rune uses than max at level(s) {', '.join(str(l + 1) for l in over)}."})
+        if c["exp"] > EXP_MAX:
+            out.append({"level": "warn", "msg": f"{c['name']} holds EXP {c['exp']}, above the game's {EXP_MAX} cap."})
+        if c["weaponLvl"] > WLVL_MAX:
+            out.append({"level": "warn", "msg": f"{c['name']} holds weapon level {c['weaponLvl']}, above the {WLVL_MAX} cap."})
+    if dec["potch"] > 99999999:
+        out.append({"level": "warn", "msg": f"Potch {dec['potch']} is above the game's 99,999,999 cap."})
+    return out
+
+
 def decode_save(gamedata):
     """Decode one save's gamedata payload (header + names + characters)."""
     names = [{"key": key, "label": label, "value": _read_str(gamedata, off, n), "max": n}
@@ -490,7 +539,7 @@ def decode_save(gamedata):
     stored = gamedata[CRC_OFF:CRC_OFF + 4] + gamedata[MD5_OFF:MD5_OFF + 16]
     calc = (struct.pack("<I", zlib.crc32(body) & 0xFFFFFFFF)
             + hashlib.md5(body).digest()[::-1])
-    return {
+    dec = {
         "size": len(gamedata),
         "version": struct.unpack_from("<I", gamedata, OFF_VERSION)[0],
         "slot": struct.unpack_from("<H", gamedata, OFF_SLOT)[0],
@@ -503,8 +552,11 @@ def decode_save(gamedata):
         "names": names,
         "characters": [c for c in decode_characters(gamedata) if c["hasData"]],
         "inventory": decode_inventory(gamedata),
+        "ships": decode_ships(gamedata),
         "writable": True,
     }
+    dec["lint"] = lint_save(gamedata, dec)
+    return dec
 
 
 # --- editing --------------------------------------------------------------------
@@ -537,6 +589,17 @@ def apply_edits_to_gamedata(gamedata, char_edits=None, name_edits=None, save_edi
                     struct.pack_into("<I", b, INVENTORY_OFF + 4 * k,
                                      inv[k] if k < len(inv) else 0)
                 changed += 1
+    if save_edits and "ships" in save_edits:
+        # [{"range": n, "armor": n, "mobility": n, "points": n} x4]; only the
+        # four documented u16 fields are written, the rest of each record is
+        # left exactly as the game wrote it.
+        for i, ship in enumerate(save_edits["ships"] or []):
+            if i >= SHIP_COUNT or not isinstance(ship, dict):
+                continue
+            for fname, fo in SHIP_FIELDS:
+                if fname in ship:
+                    struct.pack_into("<H", b, SHIPS_OFF + i * SHIP_STRIDE + fo, _clamp(ship[fname], 2))
+                    changed += 1
     if save_edits and save_edits.get("worldMapFull"):
         # Mark the world map fully explored — the exact write the game's own cheat-table
         # helper performs (0xFFFFFFFF into each of the 373 flag words).

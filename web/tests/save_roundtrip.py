@@ -49,6 +49,9 @@ def build_payload():
         b[prog + SV.OFF_PROG_RUNE_USES + lv] = [3, 8, 0, 6][lv]      # remaining (array B)
         b[prog + SV.OFF_PROG_RUNE_USES_MAX + lv] = [9, 8, 7, 6][lv]  # max (array A)
     b[SV.RECRUIT_BASE] = 10                                  # roster 0 = "Recruited"
+    for i, (fname, fo) in enumerate(SV.SHIP_FIELDS):         # ship 1 upgrade stats
+        struct.pack_into("<H", b, SV.SHIPS_OFF + fo, [5, 6, 7, 8][i])
+    struct.pack_into("<H", b, SV.SHIPS_OFF + 3 * SV.SHIP_STRIDE + 6, 42)  # ship 4 points
     for k, iid in enumerate([1, 1, 1, 26, 90]):              # bag: 3x Medicine, Green Bottle, God Hand
         struct.pack_into("<I", b, SV.INVENTORY_OFF + 4 * k, iid)
     nm = "TESTHERO".encode("latin1")                        # hero name field
@@ -88,6 +91,10 @@ def main():
     check("recruitment decoded", c0["recruited"] == 10, str(c0["recruited"]))
     check("hero name decoded", any(n["value"] == "TESTHERO" for n in s.get("names", [])))
     check("inventory decoded", s["inventory"] == [1, 1, 1, 26, 90], str(s["inventory"]))
+    check("ships decoded", s["ships"][0] == {"range": 5, "armor": 6, "mobility": 7, "points": 8}
+          and s["ships"][3]["points"] == 42, str(s["ships"]))
+    check("lint clean on synthetic save", not any(l["level"] == "error" for l in s["lint"]),
+          str(s["lint"]))
     check("checksum reported valid", s["checksumValid"] is True)
     check("container is a writable single-file", s["writable"] is True and s["container"] == "psu")
 
@@ -99,7 +106,8 @@ def main():
                         "stats": {"STR": 250}, "runes": {0: 7}, "equip": {"head": 16}}},
         name_edits={"hero": "Zephon", "ship": "Basel"},
         save_edits={"potch": 999999, "gameTime": 7200, "worldMapFull": 1,
-                    "inventory": [1, 1, 44]},
+                    "inventory": [1, 1, 44],
+                    "ships": [{"points": 99}, {}, {}, {"range": 12}]},
         make_backup=False,
     )
     check("write reports ok", res.get("ok") is True, str(res))
@@ -118,6 +126,10 @@ def main():
     check("STR persisted", c2["stats"]["STR"] == 250)
     check("rune persisted", c2["runes"][0] == 7)
     check("rune uses refilled", c2["runeUses"] == [9, 8, 7, 6] and c2["runeUsesMax"] == [9, 8, 7, 6])
+    check("ship points persisted", s2["ships"][0]["points"] == 99 and s2["ships"][0]["range"] == 5,
+          str(s2["ships"][0]))
+    check("ship range persisted", s2["ships"][3]["range"] == 12 and s2["ships"][3]["points"] == 42,
+          str(s2["ships"][3]))
     check("equipment persisted", c2["equip"]["head"] == 16, str(c2["equip"]["head"]))
     check("recruitment persisted", c2["recruited"] == 15)
     check("hero name persisted", any(n["value"] == "Zephon" for n in s2.get("names", [])))
@@ -136,6 +148,27 @@ def main():
     out, ch = SV.apply_edits_to_gamedata(payload, save_edits={"inventory": []})
     check("bag can be emptied", ch == 1 and SV.decode_inventory(out) == [])
     check("checksum still valid after write", s2["checksumValid"] is True)
+
+    # --- health lint (flags states the game itself would not produce) ---
+    print("Health lint:")
+    sick = bytearray(build_payload())
+    sick[SV.RECRUIT_BASE] = 0x63                                   # unknown recruitment value
+    sick[SV.PROG_BASE + SV.OFF_PROG_RUNE_USES] = 10                # remaining 10 > max 9 (Lv1)
+    struct.pack_into("<I", sick, SV.INVENTORY_OFF, SV.ITEM_ID_MAX + 1)  # bad bag slot
+    dec = SV.decode_save(bytes(sick))
+    msgs = " | ".join(l["msg"] for l in dec["lint"])
+    check("lint flags unknown recruitment value", "unknown recruitment value" in msgs, msgs)
+    check("lint flags rune uses above max", "more remaining rune uses than max" in msgs, msgs)
+    check("lint flags out-of-range bag id", "out-of-range item id" in msgs, msgs)
+    # a genuine late-game shape (10 characters flagged 11/15, as in Brian's real
+    # save) must NOT trip a party-size error — the flag is shared with ship roles
+    chars = [{"name": "C%d" % i, "rosterIndex": i, "recruited": 15 if i == 0 else 11,
+              "runeUses": [0, 0, 0, 0], "runeUsesMax": [0, 0, 0, 0], "exp": 0, "weaponLvl": 1}
+             for i in range(10)]
+    fake = {"checksumValid": True, "characters": chars, "potch": 0}
+    late = SV.lint_save(build_payload(), fake)
+    check("lint accepts a 10-flag late-game party", not any(l["level"] == "error" for l in late),
+          str(late))
 
     # --- rejection path (what the web loader turns into a friendly message) ---
     bad = os.path.join(tmp, "junk.bin")

@@ -320,9 +320,14 @@ matching disc patch: Free rune casting NOPs the deduction call (jal 0x2BBA58 at
 vaddr 0x45F26C, ISO 0x297A6C, stock bytes verified).
 
 Party membership: derived from the recruitment enum (11 = In Party, 15 =
-Permanently In Party). Every real save examined holds exactly 4 (hero at 15 plus
-three at 11). Shipped as the Party tab; the save records no separate slot order,
-so the tab lists roster order.
+Permanently In Party). CORRECTED 2026-11-15: the count is NOT capped at 4.
+Early saves hold exactly 4 (hero at 15 plus three at 11), but late-game saves
+legitimately hold 6 (Josh) and 10 (Brian 11251) at 11/15, including support
+and ship-role characters (Jeane, Rikie), so the flag means more than the four
+who fight. The Party tab therefore enforces no cap. The save records no
+separate slot order, so the tab lists roster order. Brian's save also holds
+one character (Agnes) at state 8, a value the CT enum does not list; meaning
+unconfirmed.
 
 Located but NOT yet identified (static RE, lab inventory_sites.md 2026-11-15):
 - Trade-goods records at 0xC8D0 (RAM 0x53F130): the region is 852 bytes = 53

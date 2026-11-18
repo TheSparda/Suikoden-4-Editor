@@ -1,4 +1,4 @@
-// Suikoden IV Save Editor — web front-end (full parity with the desktop save editor).
+// Suikoden 4 Editor — web front-end (full parity with the desktop save editor).
 //
 // We do NOT reimplement save logic in JS. The real Editor/s4save.py (+ s4files.py, s4lzari.py)
 // runs in Pyodide (CPython/WASM). The uploaded save is written to Pyodide's in-memory FS and
@@ -18,7 +18,7 @@ const GEAR_LABELS = { head: "Head", body: "Body", hands: "Hands", feet: "Feet",
                       acc1: "Accessory 1", acc2: "Accessory 2", acc3: "Accessory 3" };
 const CHAR_CAP = { maxHP: 9999, exp: 98999, weaponLvl: 15 };
 const POTCH_MAX = 99999999;
-const APP_VERSION = "1.7.0";        // keep in lockstep with the footer in index.html
+const APP_VERSION = "1.8.0";        // keep in lockstep with the footer in index.html
 // Elemental rune affinity reference (s4_affinities.json) — teaches which runes suit a unit.
 const AFF_ELEMS = ["Fire", "Lightning", "Water", "Wind", "Earth"];
 const AFF_RATE = { 1: "poor", 2: "average", 3: "good", 4: "excellent" };
@@ -270,6 +270,10 @@ async function pickupSharedFile() {
 // so the review list and the write are minimal.
 let CE, NAMES, SAVEDITS, SEARCH, RECRUITED_ONLY, SUB, INV;
 const INV_SLOTS = 75;   // party-bag capacity — mirrors INVENTORY_SLOTS in s4save.py
+const SHIP_NAMES = ["Ship 1", "Ship 2", "Ship 3 (Gaien)", "Ship 4 (Obel)"];
+const SHIP_FIELDS = [["range", "Range"], ["armor", "Armor"], ["mobility", "Mobility"], ["points", "Points"]];
+// Undo/redo over the staged-edit state (snapshot-based; see snapHook in refreshDirty).
+let UNDO_STACK = [], REDO_STACK = [], LAST_SNAP = "", RESTORING = false;
 
 function renderEditor() {
   const ed = $("#editor");
@@ -287,6 +291,7 @@ function drawSlot() {
   const s = saves[curSlot];
   CE = {}; NAMES = {}; SAVEDITS = {}; SEARCH = ""; RECRUITED_ONLY = false; SUB = "chars";
   INV = (s.inventory || []).slice();
+  UNDO_STACK = []; REDO_STACK = []; LAST_SNAP = "";
 
   const cksum = s.checksumValid ? `<span class="pill on">checksum ok</span>` : `<span class="pill">checksum off</span>`;
   const metaBits = [
@@ -315,7 +320,7 @@ function drawSlot() {
   $("#slotbody").innerHTML = `
     <div class="card">
       <div class="muted" style="margin:-2px 0 8px">${metaBits}</div>
-      <div class="row" style="margin-bottom:6px">${cksum}</div>
+      <div class="row" style="margin-bottom:6px">${cksum}${lintHtml(s)}</div>
       ${roNote}
       <h3 class="sec">Names</h3>
       <div class="grid">${names}</div>
@@ -331,12 +336,26 @@ function drawSlot() {
           <label class="row" style="gap:6px;cursor:pointer;min-height:38px">
             <input type="checkbox" id="wmfull"> mark fully explored on write</label></div>
       </div>
+      <h3 class="sec">Ships — naval upgrades</h3>
+      <div class="grid">${(s.ships || []).map((sh, i) => `
+        <div class="field"><span>${SHIP_NAMES[i] || "Ship " + (i + 1)}</span>
+          <span class="row" style="gap:6px;align-items:center;flex-wrap:wrap">${SHIP_FIELDS.map(([f, l]) =>
+            `<span class="muted">${l}</span> <input type="number" min="0" max="999" value="${sh[f] || 0}" data-ship="${i}" data-sfield="${f}" data-def="${sh[f] || 0}" style="width:64px">`).join("")}</span>
+        </div>`).join("")}
+      </div>
+      <h3 class="sec">Snapshot</h3>
+      <div class="row" style="gap:6px;flex-wrap:wrap">
+        <button type="button" class="chip" id="snapState">Export save as JSON</button>
+        <button type="button" class="chip" id="snapEdits">Export edits</button>
+        <button type="button" class="chip" id="snapImportBtn">Import edits…</button>
+        <input type="file" id="snapImportFile" accept=".json,application/json" style="display:none">
+      </div>
     </div>
     <div class="card">
       <div class="subtabs">
         <button class="chip" data-sub="chars">Characters (${total})</button>
         <button class="chip" data-sub="recruit">Recruit (${live})</button>
-        <button class="chip" data-sub="party">Party (${(s.characters || []).filter((c) => [11, 15].includes(c.recruited || 0)).length}/4)</button>
+        <button class="chip" data-sub="party">Party (${(s.characters || []).filter((c) => [11, 15].includes(c.recruited || 0)).length})</button>
         <button class="chip" data-sub="items">Items (${(s.inventory || []).length}/${INV_SLOTS})</button>
       </div>
       <input class="search" id="sq" placeholder="filter by name or #…">
@@ -350,7 +369,9 @@ function drawSlot() {
                  <button id="saveBtn">Download copy</button>`
               : `<button class="primary" id="saveBtn">Apply &amp; download</button>`) +
             (CAN_SHARE_FILES ? `<button id="shareBtn">Apply &amp; share…</button>` : "") +
-            `<button id="resetBtn">Reset</button>
+            `<button id="undoBtn" disabled>↩ Undo</button>
+             <button id="redoBtn" disabled>↪ Redo</button>
+             <button id="resetBtn">Reset</button>
              <span class="badge hidden" id="dirtyBadge">0 unsaved</span>
              <span class="status" id="status"></span>`}
       </div>
@@ -385,7 +406,88 @@ function drawSlot() {
   const sfb = $("#saveFileBtn"); if (sfb) sfb.onclick = () => applyEdits("file");
   const shb = $("#shareBtn"); if (shb) shb.onclick = () => applyEdits("share");
   const rb = $("#resetBtn"); if (rb) rb.onclick = drawSlot;
+  const ub = $("#undoBtn"); if (ub) ub.onclick = undoEdit;
+  const rdb = $("#redoBtn"); if (rdb) rdb.onclick = redoEdit;
+  $$("input[data-ship]").forEach((inp) => (inp.oninput = () => {
+    inp.classList.toggle("dirty", inp.value !== inp.dataset.def);
+    const ships = (s.ships || []).map((sh) => ({ ...sh }));
+    $$("input[data-ship]").forEach((o) => { ships[+o.dataset.ship][o.dataset.sfield] = +o.value; });
+    SAVEDITS.ships = ships; refreshDirty();
+  }));
+  const ss = $("#snapState"); if (ss) ss.onclick = () => downloadJson(`${(s.folder || "save").replace(/[^\w.-]+/g, "_")}.save.json`, s);
+  const se = $("#snapEdits"); if (se) se.onclick = () =>
+    downloadJson(`${(s.folder || "save").replace(/[^\w.-]+/g, "_")}.edits.json`,
+      { format: "s4edits", version: 1, folder: s.folder, charEdits: CE, nameEdits: NAMES, saveEdits: SAVEDITS });
+  const sib = $("#snapImportBtn"), sif = $("#snapImportFile");
+  if (sib && sif) { sib.onclick = () => sif.click(); sif.onchange = () => { if (sif.files[0]) importEdits(sif.files[0]); sif.value = ""; }; }
+  LAST_SNAP = snapState();
   showSub();
+}
+
+// ---- health lint --------------------------------------------------------------
+function lintHtml(s) {
+  const lint = s.lint || [];
+  if (!lint.length) return ` <span class="pill on">health ok</span>`;
+  const items = lint.map((l) =>
+    `<div class="fnote" style="margin-top:4px">${l.level === "error" ? "⛔" : l.level === "warn" ? "⚠️" : "ℹ️"} ${esc(l.msg)}</div>`).join("");
+  return ` <span class="pill">${lint.some((l) => l.level === "error") ? "health errors" : "health notes"}</span><span style="flex-basis:100%"></span>${items}`;
+}
+
+// ---- undo / redo + edit snapshots ----------------------------------------------
+function snapState() { return JSON.stringify({ CE, NAMES, SAVEDITS, INV }); }
+function downloadJson(name, obj) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(obj, null, 1)], { type: "application/json" }));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function updateUndoBtns() {
+  const ub = $("#undoBtn"), rb = $("#redoBtn");
+  if (ub) ub.disabled = !UNDO_STACK.length;
+  if (rb) rb.disabled = !REDO_STACK.length;
+}
+function restoreSaveState(snap) {
+  const s = saves[curSlot];
+  const st = JSON.parse(snap);
+  RESTORING = true;
+  CE = st.CE || {}; NAMES = st.NAMES || {}; SAVEDITS = st.SAVEDITS || {};
+  INV = st.INV || (s.inventory || []).slice();
+  const potch = $("#potchfld");
+  if (potch) { potch.value = SAVEDITS.potch ?? s.potch; potch.classList.toggle("dirty", String(potch.value) !== potch.dataset.def); }
+  const gt = $("#gtfld");
+  if (gt) { gt.value = SAVEDITS.gameTime ?? s.gameTimeSec; gt.classList.toggle("dirty", String(gt.value) !== gt.dataset.def); const l = $("#gtlabel"); if (l) l.textContent = gtLabel(+gt.value); }
+  $$("input[data-name]").forEach((inp) => { inp.value = NAMES[inp.dataset.name] ?? inp.dataset.def; inp.classList.toggle("dirty", inp.value !== inp.dataset.def); });
+  const wm = $("#wmfull");
+  if (wm) { wm.checked = !!SAVEDITS.worldMapFull; wm.closest(".field")?.classList.toggle("dirty-soft", wm.checked); }
+  $$("input[data-ship]").forEach((inp) => {
+    const v = (SAVEDITS.ships || s.ships || [])[+inp.dataset.ship]?.[inp.dataset.sfield];
+    if (v != null) inp.value = v;
+    inp.classList.toggle("dirty", String(inp.value) !== inp.dataset.def);
+  });
+  RESTORING = false;
+  showSub(); refreshDirty(); updateUndoBtns();
+}
+function undoEdit() {
+  if (!UNDO_STACK.length) return;
+  REDO_STACK.push(LAST_SNAP);
+  LAST_SNAP = UNDO_STACK.pop();
+  restoreSaveState(LAST_SNAP);
+}
+function redoEdit() {
+  if (!REDO_STACK.length) return;
+  UNDO_STACK.push(LAST_SNAP);
+  LAST_SNAP = REDO_STACK.pop();
+  restoreSaveState(LAST_SNAP);
+}
+async function importEdits(file) {
+  let obj;
+  try { obj = JSON.parse(await file.text()); } catch (e) { return setStatus("Not a valid edits file.", "err"); }
+  if (obj.format !== "s4edits") return setStatus("Not an s4edits snapshot.", "err");
+  CE = obj.charEdits || {}; NAMES = obj.nameEdits || {}; SAVEDITS = obj.saveEdits || {};
+  if (SAVEDITS.inventory) INV = SAVEDITS.inventory.slice();
+  UNDO_STACK = []; REDO_STACK = []; LAST_SNAP = snapState();
+  restoreSaveState(LAST_SNAP);
+  setStatus("Imported staged edits from the snapshot. Review, then Apply.", "ok");
 }
 
 // ---- subtab switch ---------------------------------------------------------
@@ -393,9 +495,9 @@ function showSub() {
   $$("[data-sub]").forEach((b) => b.classList.toggle("on", b.dataset.sub === SUB));
   const hint = $("#subhint");
   if (SUB === "party") {
-    if (hint) hint.innerHTML = `The battle party: the hero plus three. Membership is the game's own ` +
-      `recruitment flag; the order shown is roster order, as the save records no separate slot order. ` +
-      `Changes are staged until you Apply.`;
+    if (hint) hint.innerHTML = `Everyone carrying the game's In Party flag, in roster order (the save ` +
+      `records no separate slot order). Late-game saves legitimately flag more than the four who fight — ` +
+      `support and ship roles share this flag — so no cap is enforced here. Changes are staged until you Apply.`;
     drawParty();
   } else if (SUB === "items") {
     if (hint) hint.innerHTML = `The party bag. Every item takes one slot — a count of 15 means 15 slots — ` +
@@ -424,9 +526,7 @@ function drawParty() {
       <td>${leader ? `<span class="muted">stays</span>` : `<button type="button" class="chip mini" data-partyout="${c.rosterIndex}">Remove</button>`}</td></tr>`;
   }).join("") || `<tr><td colspan="4" class="muted">no party members found</td></tr>`;
   const eligible = (s.characters || []).filter((c) => recOf(c) === 10);
-  const addRow = inParty.length >= 4
-    ? `<div class="fnote" style="margin-top:10px">Party is full (4) — remove someone before adding.</div>`
-    : `<div class="row" style="gap:6px;margin-top:10px"><select id="partyAddSel" style="max-width:260px">
+    const addRow = `<div class="row" style="gap:6px;margin-top:10px"><select id="partyAddSel" style="max-width:260px">
          ${eligible.map((c) => `<option value="${c.rosterIndex}">${esc(c.name)}</option>`).join("")}
        </select><button type="button" class="chip" id="partyAddBtn" ${eligible.length ? "" : "disabled"}>Add to party</button></div>
        ${eligible.length ? "" : `<div class="fnote">No recruited characters are waiting — recruit someone first.</div>`}`;
@@ -511,9 +611,25 @@ function drawRecruit() {
         <td>${esc(c.name)}</td><td class="sl">#${c.rosterIndex}</td>
         <td><select data-recrow="${c.rosterIndex}" style="max-width:210px">${opts}</select></td></tr>`;
   }).join("") || `<tr><td colspan="3" class="muted">no matching characters</td></tr>`;
+  const stagedRecruited = (s.characters || []).filter((c) => (recOf(c) || 0) >= 10).length;
   $("#subview").innerHTML =
     `<div class="warnbox">Story-gated characters can soft-lock an early save if forced in — recruit optional units, and keep a backup.</div>
+     <div class="row" style="justify-content:space-between;margin-bottom:8px">
+       <span class="muted">${stagedRecruited} of ${(s.characters || []).length} recruited (with staged changes)</span>
+       <span class="row" style="gap:6px">
+         <button type="button" class="chip mini" id="recAll">Recruit all</button>
+         <button type="button" class="chip mini" id="recClear">Unrecruit all</button>
+       </span>
+     </div>
      <table class="invtbl"><thead><tr><th>Character</th><th>#</th><th>Recruitment</th></tr></thead><tbody>${rows}</tbody></table>`;
+  const ra = $("#recAll"); if (ra) ra.onclick = () => {
+    (s.characters || []).forEach((c) => { if ((recOf(c) || 0) === 0) ce(c.rosterIndex).recruited = 10; });
+    refreshDirty(); drawRecruit();
+  };
+  const rc = $("#recClear"); if (rc) rc.onclick = () => {
+    (s.characters || []).forEach((c) => { if (recOf(c) === 10) ce(c.rosterIndex).recruited = 0; });
+    refreshDirty(); drawRecruit();
+  };
   $$("select[data-recrow]").forEach((se) => (se.onchange = () => {
     const c = charByRoster(+se.dataset.recrow); if (!c) return;
     ce(c.rosterIndex).recruited = +se.value;
@@ -692,12 +808,33 @@ function refreshDirty() {
   if (_badgeRAF) return;
   _badgeRAF = requestAnimationFrame(() => {
     _badgeRAF = 0;
+    // Undo history: snapshot the staged state whenever it actually changes.
+    if (!RESTORING && typeof CE !== "undefined" && CE) {
+      const snap = snapState();
+      if (LAST_SNAP && snap !== LAST_SNAP) {
+        UNDO_STACK.push(LAST_SNAP);
+        if (UNDO_STACK.length > 60) UNDO_STACK.shift();
+        REDO_STACK = [];
+        LAST_SNAP = snap;
+      } else if (!LAST_SNAP) LAST_SNAP = snap;
+      updateUndoBtns();
+    }
     const el = $("#dirtyBadge"); if (!el) return;
     const n = countEffective();
     el.textContent = `${n} unsaved`;
     el.classList.toggle("hidden", n === 0);
   });
 }
+
+document.addEventListener("keydown", (e) => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+  const t = e.target;
+  if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT")) return;
+  if (!$("#slotbody")) return;
+  const k = e.key.toLowerCase();
+  if (k === "z" && !e.shiftKey) { e.preventDefault(); undoEdit(); }
+  else if (k === "y" || (k === "z" && e.shiftKey)) { e.preventDefault(); redoEdit(); }
+});
 
 // ---- build review + apply --------------------------------------------------
 function countEffective() { return buildDiff().length; }
@@ -708,6 +845,12 @@ function buildDiff() {
   const byRi = {}; (s.characters || []).forEach((c) => (byRi[c.rosterIndex] = c));
 
   if ("potch" in SAVEDITS && SAVEDITS.potch !== s.potch) rows.push({ g: "Save", t: `Potch: ${s.potch} → ${SAVEDITS.potch}` });
+  if (SAVEDITS.ships) (SAVEDITS.ships || []).forEach((sh, i) => {
+    SHIP_FIELDS.forEach(([f, l]) => {
+      const o = (s.ships || [])[i]?.[f] || 0;
+      if (sh && sh[f] != null && sh[f] !== o) rows.push({ g: "Ships", t: `${SHIP_NAMES[i] || "Ship " + (i + 1)} ${l}: ${o} → ${sh[f]}` });
+    });
+  });
   if ("gameTime" in SAVEDITS && SAVEDITS.gameTime !== s.gameTimeSec) rows.push({ g: "Save", t: `Game time: ${gtLabel(s.gameTimeSec)} → ${gtLabel(SAVEDITS.gameTime)}` });
   if (SAVEDITS.worldMapFull) rows.push({ g: "Save", t: `World map → mark fully explored` });
   if (SAVEDITS.inventory) {

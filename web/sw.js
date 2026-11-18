@@ -1,4 +1,4 @@
-// Service worker for the Suikoden IV Save Editor PWA.
+// Service worker for the Suikoden 4 Editor PWA.
 //
 // Goal: installable on Android + usable offline after the first successful load.
 // Strategy:
@@ -6,7 +6,7 @@
 //     back to cache when offline. Keeps a new deploy fresh yet still works with no signal.
 //   - cross-origin (the Pyodide CDN — large, immutable, version-pinned URLs): cache-first,
 //     so the ~10 MB runtime downloads once and is instant thereafter.
-const CACHE = "s4editor-v11";
+const CACHE = "s4editor-v12";
 const SHARE_CACHE = "s4editor-share";   // must match app.js (share-target hand-off)
 const SHELL = [
   "./", "./index.html", "./style.css", "./app.js", "./vcdiff.js", "./iso.js", "./manifest.webmanifest",
