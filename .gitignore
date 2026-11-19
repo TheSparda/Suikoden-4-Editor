@@ -13,3 +13,6 @@ Base ISO/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Raw Dropbox save pull (local test content, 113 MB, not tracked)
+Saves/dropbox/
