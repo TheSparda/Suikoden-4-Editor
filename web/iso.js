@@ -94,6 +94,88 @@
     },
   ];
 
+  // ---- spell targeting table (issue #50) ---------------------------------------
+  // The action/spell definition table (205 records x 48 bytes) lives inside
+  // FILEDATA.BIN's database entries: archive 3 entry 0x6AB (table at entry +660)
+  // and a byte-identical duplicate in archive 7 entry 0x6AA (table at +52).
+  // Both copies are read as edit windows and always written together.
+  // A spell's LOGICAL record starts 12 bytes into its grid record:
+  //   +0/+2 text indices, +4 element, +6 target-scope code, clause words at
+  //   +8/+16/+28 (high byte: 0x10 = one target, 0x04 = all targets, other bits
+  //   are flags like 0x80 drain / 0x40 self), power at +44.
+  // Full analysis: lab spell_table.md; per-spell data in Editor/s4_spells.json.
+  const SPELL_TABS = [
+    { key: "spellTabA", at: 0x7867E274, len: 9840 },
+    { key: "spellTabB", at: 0x7874D774, len: 9840 },
+  ];
+  const SPELL_FIRST = 1, SPELL_LAST = 45;      // rune spells + unites
+  // Target-scope codes (record +6 low byte), paired within each spell kind.
+  const SCOPE_PAIRS = {
+    0x0A: { one: 0x0A, all: 0x22, oneLabel: "One enemy", allLabel: "All enemies" },
+    0x22: { one: 0x0A, all: 0x22, oneLabel: "One enemy", allLabel: "All enemies" },
+    0x07: { one: 0x07, all: 0x13, oneLabel: "One ally", allLabel: "All allies" },
+    0x13: { one: 0x07, all: 0x13, oneLabel: "One ally", allLabel: "All allies" },
+    0x06: { one: 0x06, all: 0x12, oneLabel: "One ally", allLabel: "All allies" },
+    0x12: { one: 0x06, all: 0x12, oneLabel: "One ally", allLabel: "All allies" },
+  };
+  const SCOPE_FIXED = { 0x42: "Special (mixed targets)", 0x87: "One ally (revive)" };
+  const CLAUSE_OFFS = [8, 16, 28];
+  const spellRecOff = (id) => 48 * id + 12;
+  function spellSig(b) {
+    const dv = new DataView(b.buffer, b.byteOffset, b.length);
+    return dv.getUint16(12, true) === 0 && dv.getUint16(14, true) === 1 &&
+           dv.getUint16(60, true) === 2 && dv.getUint16(62, true) === 3 &&
+           dv.getUint16(spellRecOff(22), true) === 44 && dv.getUint16(spellRecOff(22) + 44, true) === 300;
+  }
+  function scopeLabel(code) {
+    const p = SCOPE_PAIRS[code];
+    if (p) return code === p.all ? p.allLabel : p.oneLabel;
+    return SCOPE_FIXED[code] || `Fixed (0x${code.toString(16).toUpperCase()})`;
+  }
+  // Flip a clause word's scope bit (0x10 one <-> 0x04 all), preserving flag bits.
+  function scopeFlipWord(w, toAll) {
+    const hi = w >> 8, lo = w & 0xFF;
+    if (toAll && (hi & 0x10) && !(hi & 0x04)) return (((hi & ~0x10) | 0x04) << 8) | lo;
+    if (!toAll && (hi & 0x04) && !(hi & 0x10)) return (((hi & ~0x04) | 0x10) << 8) | lo;
+    return w;
+  }
+  // Read one spell's scope-relevant values from a table window's bytes.
+  function spellVals(buf, id) {
+    const dv = new DataView(buf.buffer, buf.byteOffset, buf.length);
+    const base = spellRecOff(id);
+    return { code: dv.getUint8(base + 6), clauses: CLAUSE_OFFS.map((o) => dv.getUint16(base + o, true)) };
+  }
+  function spellDirty(id) {
+    const w = win("spellTabA"); if (!w || !SPELLS || SPELLS.error) return false;
+    const s = SPELLS.spells[id]; if (!s) return false;
+    const cur = spellVals(w.buf, id);
+    return cur.code !== s.code || cur.clauses.some((c, i) => c !== s.clauses[i]);
+  }
+  function anySpellDirty() {
+    if (!win("spellTabA") || !SPELLS || SPELLS.error) return false;
+    for (let id = SPELL_FIRST; id <= SPELL_LAST; id++) if (spellDirty(id)) return true;
+    return false;
+  }
+  function writeSpell(id, code, clauses) {
+    for (const t of SPELL_TABS) {
+      const w = win(t.key); if (!w) continue;
+      const base = spellRecOff(id);
+      w.dv.setUint8(base + 6, code);
+      CLAUSE_OFFS.forEach((o, i) => w.dv.setUint16(base + o, clauses[i], true));
+    }
+  }
+  function applySpellScope(id, newCode) {
+    const pair = SCOPE_PAIRS[newCode]; if (!pair) return;
+    const w = win("spellTabA"); if (!w) return;
+    const cur = spellVals(w.buf, id);
+    const toAll = newCode === pair.all;
+    writeSpell(id, newCode, cur.clauses.map((c) => scopeFlipWord(c, toAll)));
+  }
+  function restoreSpell(id) {
+    const s = SPELLS && SPELLS.spells[id]; if (!s) return;
+    writeSpell(id, s.code, s.clauses.slice());
+  }
+
   // ---- capability detection ---------------------------------------------------
   const SUPPORTS_FS = typeof window !== "undefined" && typeof window.showOpenFilePicker === "function";
   const CAN_TRANSFER_STREAM = (() => {
@@ -106,10 +188,11 @@
   let isoHandle = null, isoName = "", isoFile = null;
   let WINDOWS = {};        // key -> {off, len, buf, orig, dv, odv}
   let inited = false, saveNudged = false;
-  // Tab shell: Patches (the FIELDS editors) / Files
-  // (the FILEDATA sub-file browser over Editor/s4_subfile_index.json).
+  // Tab shell: Patches (the FIELDS editors) / Spells (spell targeting, #50) /
+  // Files (the FILEDATA sub-file browser over Editor/s4_subfile_index.json).
   let VIEW = "patches";
   let IDX = null, IDX_C = "FILEDATA.BI2", IDX_A = 0, IDX_Q = "";
+  let SPELLS = null;         // Editor/s4_spells.json, fetched lazily
 
   const win = (k) => WINDOWS[k];
   const fmtSize = (n) => n >= 1e9 ? (n / 1e9).toFixed(2) + " GB" : n >= 1e6 ? (n / 1e6).toFixed(1) + " MB" : Math.round(n / 1e3) + " KB";
@@ -145,7 +228,9 @@
 
   async function commitIso(file, handle) {
     setStatus("Reading disc region…", "");
-    const maxOff = FIELDS.reduce((a, f) => Math.max(a, f.off + f.len), 0);
+    const maxOff = Math.max(
+      FIELDS.reduce((a, f) => Math.max(a, f.off + f.len), 0),
+      SPELL_TABS.reduce((a, t) => Math.max(a, t.at + t.len), 0));
     if (file.size < maxOff) return setStatus(`That file is only ${fmtSize(file.size)} — not a full Suikoden IV ISO.`, "err");
     const wins = {};
     for (const f of FIELDS) {
@@ -158,6 +243,16 @@
           `(unexpected bytes at 0x${f.off.toString(16).toUpperCase()}). PAL/other builds aren't supported here.`, "err");
       }
       wins[f.key] = { off: f.off, len: f.len, buf: bytes, orig: bytes.slice(), dv: new DataView(bytes.buffer), odv: new DataView(bytes.slice().buffer) };
+    }
+    for (const t of SPELL_TABS) {
+      let bytes;
+      try { bytes = new Uint8Array(await file.slice(t.at, t.at + t.len).arrayBuffer()); }
+      catch (e) { return setStatus("Read failed: " + e.message, "err"); }
+      if (bytes.length !== t.len || !spellSig(bytes)) {
+        return setStatus(`This doesn't look like the NTSC-U (SLUS-209.79) Suikoden IV ISO ` +
+          `(the spell table at 0x${t.at.toString(16).toUpperCase()} didn't match). PAL/other builds aren't supported here.`, "err");
+      }
+      wins[t.key] = { off: t.at, len: t.len, buf: bytes, orig: bytes.slice(), dv: new DataView(bytes.buffer), odv: new DataView(bytes.slice().buffer) };
     }
     WINDOWS = wins; isoHandle = handle; isoFile = file; isoName = file.name || "Suikoden IV.iso";
     saveNudged = false;
@@ -230,6 +325,7 @@
   function tabsHtml() {
     return `<div class="subtabs" style="margin-bottom:10px">
       <button class="chip${VIEW === "patches" ? " on" : ""}" data-isoview="patches">Patches</button>
+      <button class="chip${VIEW === "spells" ? " on" : ""}" data-isoview="spells">Spells</button>
       <button class="chip${VIEW === "files" ? " on" : ""}" data-isoview="files">Files</button>
     </div>`;
   }
@@ -279,25 +375,65 @@
     if (q) q.oninput = () => { IDX_Q = q.value; const pos = q.selectionStart; render(); const nq = $("#idxQ"); if (nq) { nq.focus(); nq.setSelectionRange(pos, pos); } };
   }
 
-  function render() {
-    if (!Object.keys(WINDOWS).length) return;
-    if (VIEW === "files") { $("#isoEditor").innerHTML = tabsHtml() + filesHtml(); wireTabs(); wireFiles(); return; }
-    const groups = {};
-    FIELDS.forEach((f) => (groups[f.group] = groups[f.group] || []).push(f));
+  // ---- Spells view (spell targeting / shape, issue #50) ------------------------
+  async function loadSpells() {
+    try { SPELLS = await (await fetch(`${EDITOR_DIR}/s4_spells.json`)).json(); }
+    catch (e) { SPELLS = { error: String(e) }; }
+    if (VIEW === "spells" || VIEW === "patches") render();
+  }
+  function spellRowHtml(s) {
+    const w = win("spellTabA");
+    const cur = spellVals(w.buf, s.id);
+    const pair = SCOPE_PAIRS[cur.code];
+    const dirty = spellDirty(s.id);
+    const ctl = pair
+      ? `<select data-spell="${s.id}">
+           <option value="${pair.one}"${cur.code === pair.one ? " selected" : ""}>${esc(pair.oneLabel)}</option>
+           <option value="${pair.all}"${cur.code === pair.all ? " selected" : ""}>${esc(pair.allLabel)}</option>
+         </select>`
+      : `<span class="muted">${esc(scopeLabel(cur.code))}</span>`;
+    return `<div class="invrow"><span class="invname"><b>${esc(s.name)}</b>
+        <span class="muted">${esc(s.desc)}</span></span>
+      <span class="invctl">${s.power ? `<span class="muted">PWR ${s.power}</span>` : ""}${ctl}
+      ${dirty ? `<span class="pill">changed</span> <button type="button" class="chip mini" data-spellrestore="${s.id}" title="stage the stock targeting">↺ restore</button>` : `<span class="pill on">stock</span>`}</span></div>`;
+  }
+  function spellsHtml() {
+    if (!SPELLS) { loadSpells(); return `<div class="card"><span class="muted">Loading spell data…</span></div>`; }
+    if (SPELLS.error) return `<div class="card"><span class="status err">Spell data failed to load: ${esc(SPELLS.error)}</span></div>`;
+    const list = SPELLS.spells.slice(SPELL_FIRST, SPELL_LAST + 1);
+    let html = `<div class="card"><h3 class="sec">Spell targeting</h3>
+      <div class="fnote">Change which targets a spell hits: make a single-target spell hit every
+      enemy or every ally, or narrow an all-target spell back to one. The scope code in each
+      spell's definition record is switched within its own kind (damage, heal or buff), and the
+      target bits of its effect clauses follow, mirroring how the game's own spells are built.
+      Both copies of the table on the disc are patched together. Spells marked “Special” or
+      “revive” have no verified single/all pair and stay fixed.</div>
+      ${anySpellDirty() ? `<div class="toolbar"><button id="isoSpellRestoreAll">Restore all spell targeting to stock</button></div>` : ""}`;
+    let lastElem = null;
+    for (const s of list) {
+      if (s.element !== lastElem) {
+        if (lastElem !== null) html += `</div>`;
+        html += `<div class="card"><h3 class="sec">${esc(s.elementName)}</h3>`;
+        lastElem = s.element;
+      }
+      html += spellRowHtml(s);
+    }
+    if (lastElem !== null) html += `</div>`;
+    return html;
+  }
+  function wireSpells() {
+    $$("[data-spell]").forEach((sel) => (sel.onchange = () => { applySpellScope(+sel.dataset.spell, +sel.value); render(); }));
+    $$("[data-spellrestore]").forEach((b) => (b.onclick = () => { restoreSpell(+b.dataset.spellrestore); render(); }));
+    const ra = $("#isoSpellRestoreAll");
+    if (ra) ra.onclick = () => { for (let id = SPELL_FIRST; id <= SPELL_LAST; id++) restoreSpell(id); render(); };
+  }
+
+  function saveCardHtml() {
     const mode = saveMode();
     const modeNote = mode === "inplace" ? "edits write in place to your ISO"
       : mode === "stream" ? "saving streams a patched copy to your downloads"
       : "this browser can't write the ISO — copy the pnach line instead";
-
-    const groupHtml = Object.entries(groups).map(([g, fs]) => {
-      const vals = fs.filter((f) => f.type !== "bool"), bools = fs.filter((f) => f.type === "bool");
-      return `<div class="card"><h3 class="sec">${esc(g)}</h3>
-        ${vals.length ? `<div class="isovals">${vals.map(fieldHtml).join("")}</div>` : ""}
-        ${bools.length ? `<div class="isotoggles">${bools.map(fieldHtml).join("")}</div>` : ""}
-      </div>`;
-    }).join("");
-
-    $("#isoEditor").innerHTML = tabsHtml() + groupHtml + changesHtml() + `
+    return `
       <div class="card">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
           <button class="chip" id="isoPnach">⧉ Copy pnach line</button>
@@ -317,12 +453,11 @@
                <span class="status" id="isoStatus"></span>`}
         </div>
       </div>`;
-
-    FIELDS.forEach(wireField);
-    syncEnable();
+  }
+  function wireSaveCard() {
     const sv = $("#isoSave"); if (sv) sv.onclick = save;
     const rs = $("#isoReset"); if (rs) rs.onclick = () => { for (const k in WINDOWS) WINDOWS[k].buf.set(WINDOWS[k].orig); render(); };
-    $("#isoPnach").onclick = copyPnach;
+    const pn = $("#isoPnach"); if (pn) pn.onclick = copyPnach;
     const er = $("#isoRecipe"); if (er) er.onclick = exportRecipe;
     const ex = $("#isoXdelta"); if (ex) ex.onclick = exportXdelta;
     const pb = $("#isoPatchBtn"), pf = $("#isoPatchFile");
@@ -334,6 +469,27 @@
     }));
     const ra = $("#isoRestoreAll");
     if (ra) ra.onclick = () => { FIELDS.forEach((f) => { const w = win(f.key); if (w) w.buf.set(stockBytes(f)); }); render(); };
+  }
+
+  function render() {
+    if (!Object.keys(WINDOWS).length) return;
+    if (VIEW === "files") { $("#isoEditor").innerHTML = tabsHtml() + filesHtml(); wireTabs(); wireFiles(); return; }
+    if (VIEW === "spells") { $("#isoEditor").innerHTML = tabsHtml() + spellsHtml() + saveCardHtml(); wireTabs(); wireSpells(); wireSaveCard(); return; }
+    const groups = {};
+    FIELDS.forEach((f) => (groups[f.group] = groups[f.group] || []).push(f));
+    const groupHtml = Object.entries(groups).map(([g, fs]) => {
+      const vals = fs.filter((f) => f.type !== "bool"), bools = fs.filter((f) => f.type === "bool");
+      return `<div class="card"><h3 class="sec">${esc(g)}</h3>
+        ${vals.length ? `<div class="isovals">${vals.map(fieldHtml).join("")}</div>` : ""}
+        ${bools.length ? `<div class="isotoggles">${bools.map(fieldHtml).join("")}</div>` : ""}
+      </div>`;
+    }).join("");
+
+    $("#isoEditor").innerHTML = tabsHtml() + groupHtml + changesHtml() + saveCardHtml();
+
+    FIELDS.forEach(wireField);
+    syncEnable();
+    wireSaveCard();
     wireTabs();
   }
 
@@ -419,6 +575,15 @@
       const ov = f.read(new DataView(w.orig.buffer)), nv = f.read(w.dv);
       const fmt = (x) => f.type === "bool" ? (x ? "on" : "off") : `${x}${f.type === "percent" ? "%" : ""}`;
       rows.push({ g: f.group, t: `${f.label}: ${fmt(ov)} → ${fmt(nv)}` });
+    }
+    const tw = win("spellTabA");
+    if (tw && isDirty("spellTabA")) {
+      for (let id = SPELL_FIRST; id <= SPELL_LAST; id++) {
+        const before = spellVals(tw.orig, id), now = spellVals(tw.buf, id);
+        if (before.code === now.code && before.clauses.every((c, i) => c === now.clauses[i])) continue;
+        const nm = (SPELLS && SPELLS.spells && SPELLS.spells[id]) ? SPELLS.spells[id].name : `Spell ${id}`;
+        rows.push({ g: "Spell targeting", t: `${nm}: ${scopeLabel(before.code)} → ${scopeLabel(now.code)}` });
+      }
     }
     return rows;
   }
@@ -524,6 +689,8 @@
         n++;
       }
     }
+    if (!n && (isDirty("spellTabA") || isDirty("spellTabB")))
+      return setStatus("Spell targeting edits can't be expressed as a pnach: the table loads from FILEDATA, not the boot ELF. Save the ISO, or export a .s4mod / .xdelta instead.", "warn");
     if (!n) return setStatus("No changes to copy — edit a value first.", "warn");
     const text = lines.join("\n");
     (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
@@ -668,7 +835,14 @@
       return `<div class="invrow"><span class="invname">${esc(f.label)}</span>
         <span class="invctl">${state}
         ${isStock ? "" : `<button type="button" class="chip mini" data-restore="${f.key}" title="stage the stock bytes">↺ restore</button>`}</span></div>`;
-    }).join("");
+    }).join("") + (() => {
+      if (!SPELLS) { loadSpells(); return ""; }
+      if (SPELLS.error || !win("spellTabA")) return "";
+      let n = 0;
+      for (let id = SPELL_FIRST; id <= SPELL_LAST; id++) if (spellDirty(id)) n++;
+      return `<div class="invrow"><span class="invname">Spell targeting</span>
+        <span class="invctl">${n ? `<span class="pill">${n} spell(s) changed</span>` : `<span class="pill on">stock</span>`}</span></div>`;
+    })();
     const anyPatched = FIELDS.some((f) => { const w = win(f.key); return w && !stockBytes(f).every((v, i) => v === w.buf[i]); });
     return `<div class="card"><h3 class="sec">Changes on this disc</h3>
       <div class="fnote">What is already patched on the loaded disc, checked against the stock bytes at each site.</div>

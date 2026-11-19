@@ -1,0 +1,3441 @@
+{
+ "format": "s4-spells/1",
+ "source": "FILEDATA.BIN archive 3 entry 0x6AB (duplicate: archive 7 entry 0x6AA)",
+ "tableEntryOffset": 660,
+ "spells": [
+  {
+   "id": 0,
+   "name": "Dummy Magic",
+   "desc": "none",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 0,
+   "codeHi": 0,
+   "clauses": [
+    0,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 1,
+   "name": "Flaming Arrows",
+   "desc": "-100HP to 1 enemy.",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 10,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 2,
+   "name": "Dancing Flames",
+   "desc": "-150HP to all enemies.",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 150,
+   "sub": 0
+  },
+  {
+   "id": 3,
+   "name": "Blazing Wall",
+   "desc": "-300HP to all enemies.",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 300,
+   "sub": 0
+  },
+  {
+   "id": 4,
+   "name": "Explosion",
+   "desc": "-500HP to all enemies.",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 500,
+   "sub": 0
+  },
+  {
+   "id": 5,
+   "name": "Final Flame",
+   "desc": "-700HP to all enemies.",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 34,
+   "codeHi": 5,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 700,
+   "sub": 0
+  },
+  {
+   "id": 6,
+   "name": "Kindness Drops",
+   "desc": "Gain HP, cure status ailments (1 ally).",
+   "element": 5,
+   "elementName": "Water",
+   "code": 7,
+   "codeHi": 1,
+   "clauses": [
+    4120,
+    4114,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 7,
+   "name": "Breath of Ice",
+   "desc": "-100HP to all enemies.",
+   "element": 5,
+   "elementName": "Water",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 8,
+   "name": "Kindness Rain",
+   "desc": "Gain HP, cure status ailments (allies).",
+   "element": 5,
+   "elementName": "Water",
+   "code": 19,
+   "codeHi": 1,
+   "clauses": [
+    1048,
+    1042,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 9,
+   "name": "Silent Lake",
+   "desc": "Temporarily suppress magic for all.",
+   "element": 5,
+   "elementName": "Water",
+   "code": 66,
+   "codeHi": 1,
+   "clauses": [
+    1092,
+    0,
+    1092
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 10,
+   "name": "Mother Ocean",
+   "desc": "HP/status ailments/KO cured (1 ally).",
+   "element": 5,
+   "elementName": "Water",
+   "code": 7,
+   "codeHi": 1,
+   "clauses": [
+    4120,
+    4114,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 11,
+   "name": "Wind of Sleep",
+   "desc": "Put all enemies to sleep.",
+   "element": 2,
+   "elementName": "Wind",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    1540
+   ],
+   "magnitude": 0,
+   "power": 40,
+   "sub": 0
+  },
+  {
+   "id": 12,
+   "name": "Healing Wind",
+   "desc": "HP/status ailments cured (1 ally).",
+   "element": 2,
+   "elementName": "Wind",
+   "code": 7,
+   "codeHi": 1,
+   "clauses": [
+    4120,
+    4114,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 13,
+   "name": "The Shredding",
+   "desc": "-300HP to all enemies.",
+   "element": 2,
+   "elementName": "Wind",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 300,
+   "sub": 0
+  },
+  {
+   "id": 14,
+   "name": "Funeral Wind",
+   "desc": "-300HP to 1 enemy, 25% chance of death.",
+   "element": 2,
+   "elementName": "Wind",
+   "code": 10,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 300,
+   "sub": 25
+  },
+  {
+   "id": 15,
+   "name": "Shining Wind",
+   "desc": "+300HP (all allies). -500HP (all foes).",
+   "element": 2,
+   "elementName": "Wind",
+   "code": 66,
+   "codeHi": 1,
+   "clauses": [
+    1042,
+    0,
+    1041
+   ],
+   "magnitude": 300,
+   "power": 500,
+   "sub": 0
+  },
+  {
+   "id": 16,
+   "name": "Clay Guardian",
+   "desc": "+30% defense for 3 turns (all allies).",
+   "element": 3,
+   "elementName": "Earth",
+   "code": 18,
+   "codeHi": 1,
+   "clauses": [
+    1092,
+    1092,
+    0
+   ],
+   "magnitude": 20,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 17,
+   "name": "Vengeful Child",
+   "desc": "Defend against magic once (1 ally).",
+   "element": 3,
+   "elementName": "Earth",
+   "code": 6,
+   "codeHi": 1,
+   "clauses": [
+    4356,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 18,
+   "name": "Guardian Earth",
+   "desc": "Cure all status ailments (all allies).",
+   "element": 3,
+   "elementName": "Earth",
+   "code": 18,
+   "codeHi": 1,
+   "clauses": [
+    1048,
+    0,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 19,
+   "name": "Earthquake",
+   "desc": "-800HP to all earthbound enemies.",
+   "element": 3,
+   "elementName": "Earth",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    9233
+   ],
+   "magnitude": 0,
+   "power": 800,
+   "sub": 0
+  },
+  {
+   "id": 20,
+   "name": "Canopy Defense",
+   "desc": "Defend against magic once (all allies).",
+   "element": 3,
+   "elementName": "Earth",
+   "code": 18,
+   "codeHi": 1,
+   "clauses": [
+    1284,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 21,
+   "name": "Berserk Blow",
+   "desc": "-100HP to all enemies.",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 22,
+   "name": "Thunder Runner",
+   "desc": "-300HP to 1 enemy.",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 10,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 300,
+   "sub": 0
+  },
+  {
+   "id": 23,
+   "name": "Soaring Bolt",
+   "desc": "-600HP to 1 enemy.",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 10,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 600,
+   "sub": 0
+  },
+  {
+   "id": 24,
+   "name": "Furious Blow",
+   "desc": "-900HP to 1 enemy.",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 10,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 900,
+   "sub": 0
+  },
+  {
+   "id": 25,
+   "name": "Heavenly Thunder",
+   "desc": "-1500HP to 1 enemy.",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 10,
+   "codeHi": 5,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 1500,
+   "sub": 0
+  },
+  {
+   "id": 26,
+   "name": "Eternal Ordeal",
+   "desc": "-300HP to 1 enemy, -30HP to self.",
+   "element": 9,
+   "elementName": "Rune of Punishment",
+   "code": 10,
+   "codeHi": 1,
+   "clauses": [
+    16401,
+    0,
+    4113
+   ],
+   "magnitude": 30,
+   "power": 300,
+   "sub": 0
+  },
+  {
+   "id": 27,
+   "name": "Double Edged Swd",
+   "desc": "-150HP to all enemies, -50HP to self.",
+   "element": 9,
+   "elementName": "Rune of Punishment",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    16401,
+    0,
+    1041
+   ],
+   "magnitude": 50,
+   "power": 150,
+   "sub": 0
+  },
+  {
+   "id": 28,
+   "name": "Voice of Death",
+   "desc": "Very fatal (1 enemy), 10% fatal (self).",
+   "element": 9,
+   "elementName": "Rune of Punishment",
+   "code": 10,
+   "codeHi": 1,
+   "clauses": [
+    16404,
+    0,
+    4116
+   ],
+   "magnitude": 10,
+   "power": 70,
+   "sub": 0
+  },
+  {
+   "id": 29,
+   "name": "Everlasting Mercy",
+   "desc": "-500HP (all enemies), +500HP (allies).",
+   "element": 9,
+   "elementName": "Rune of Punishment",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    2066,
+    0,
+    1041
+   ],
+   "magnitude": 500,
+   "power": 500,
+   "sub": 0
+  },
+  {
+   "id": 30,
+   "name": "Ready!",
+   "desc": "Teleport 1 foe. Backfires if it fails.",
+   "element": 10,
+   "elementName": "Blinking",
+   "code": 10,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    4116
+   ],
+   "magnitude": 0,
+   "power": 60,
+   "sub": 0
+  },
+  {
+   "id": 31,
+   "name": "Set!",
+   "desc": "-200HP to all enemies.",
+   "element": 10,
+   "elementName": "Blinking",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 200,
+   "sub": 0
+  },
+  {
+   "id": 32,
+   "name": "Go!",
+   "desc": "Teleport all enemies.",
+   "element": 10,
+   "elementName": "Blinking",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    1044
+   ],
+   "magnitude": 0,
+   "power": 40,
+   "sub": 0
+  },
+  {
+   "id": 33,
+   "name": "Finger of Death",
+   "desc": "Drain 1 enemy's life energy.",
+   "element": 7,
+   "elementName": "Soul Eater",
+   "code": 10,
+   "codeHi": 1,
+   "clauses": [
+    16402,
+    0,
+    36880
+   ],
+   "magnitude": 0,
+   "power": 150,
+   "sub": 0
+  },
+  {
+   "id": 34,
+   "name": "Black Shadow",
+   "desc": "-300HP to all enemies.",
+   "element": 7,
+   "elementName": "Soul Eater",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 300,
+   "sub": 0
+  },
+  {
+   "id": 35,
+   "name": "Hades",
+   "desc": "Drain life energy of all enemies.",
+   "element": 7,
+   "elementName": "Soul Eater",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    16402,
+    0,
+    33808
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 36,
+   "name": "Judgment",
+   "desc": "-1500HP to 1 enemy.",
+   "element": 7,
+   "elementName": "Soul Eater",
+   "code": 10,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 1500,
+   "sub": 0
+  },
+  {
+   "id": 37,
+   "name": "Rebuke",
+   "desc": "-50HP to 1 enemy (-100HP if undead).",
+   "element": 6,
+   "elementName": "Resurrection",
+   "code": 10,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    17
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 38,
+   "name": "Spirit Yell",
+   "desc": "Revive 1 ally (gets 1/10 HP).",
+   "element": 6,
+   "elementName": "Resurrection",
+   "code": 135,
+   "codeHi": 1,
+   "clauses": [
+    4114,
+    4096,
+    4112
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 39,
+   "name": "Purifying Evil",
+   "desc": "-300HP to all foes (-600HP if undead).",
+   "element": 6,
+   "elementName": "Resurrection",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 40,
+   "name": "Bellow",
+   "desc": "+300HP to all allies.",
+   "element": 6,
+   "elementName": "Resurrection",
+   "code": 19,
+   "codeHi": 1,
+   "clauses": [
+    1042,
+    0,
+    16
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 41,
+   "name": "Scorched Earth",
+   "desc": "-1500HP to all enemies.",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 34,
+   "codeHi": 9,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 1500,
+   "sub": 0
+  },
+  {
+   "id": 42,
+   "name": "Fierce Wind Fangs",
+   "desc": "-1500HP to all enemies.",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 34,
+   "codeHi": 9,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 1500,
+   "sub": 0
+  },
+  {
+   "id": 43,
+   "name": "Water Dragon",
+   "desc": "-900HP to all foes. All allies healed.",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 66,
+   "codeHi": 9,
+   "clauses": [
+    1048,
+    1042,
+    1041
+   ],
+   "magnitude": 100,
+   "power": 900,
+   "sub": 0
+  },
+  {
+   "id": 44,
+   "name": "Thunder God",
+   "desc": "-1500HP to 1 enemy. All allies healed.",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 10,
+   "codeHi": 9,
+   "clauses": [
+    1048,
+    1042,
+    4113
+   ],
+   "magnitude": 100,
+   "power": 1500,
+   "sub": 0
+  },
+  {
+   "id": 45,
+   "name": "Flame Array",
+   "desc": "-2000HP to 1 foe, -1000HP to other foes.",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 10,
+   "codeHi": 9,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 2000,
+   "sub": 0
+  },
+  {
+   "id": 46,
+   "name": "Hawk Rune",
+   "desc": "Turn bow attack into widespread attack.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 47,
+   "name": "Red Rose Rune",
+   "desc": "Elegant attack against 1 enemy.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 4,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 2,
+   "sub": 0
+  },
+  {
+   "id": 48,
+   "name": "Shrike Rune",
+   "desc": "Use ninja technique against 1 enemy.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 0,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 2,
+   "sub": 0
+  },
+  {
+   "id": 49,
+   "name": "Falcon Rune",
+   "desc": "Combo attack against 1 enemy.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 3,
+   "sub": 0
+  },
+  {
+   "id": 50,
+   "name": "Umanami Single",
+   "desc": "Attack single enemy.",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 70,
+   "sub": 0
+  },
+  {
+   "id": 51,
+   "name": "Behemoth Special",
+   "desc": "Attack all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 70,
+   "sub": 0
+  },
+  {
+   "id": 52,
+   "name": "Water Breath",
+   "desc": "Breath attack against all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 50,
+   "sub": 0
+  },
+  {
+   "id": 53,
+   "name": "Friendship Attack",
+   "desc": "Damage 1 enemy.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 30,
+   "sub": 0
+  },
+  {
+   "id": 54,
+   "name": "Medicine",
+   "desc": "Recover a little HP for 1 ally.",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    0,
+    0
+   ],
+   "magnitude": 50,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 55,
+   "name": "Mega Medicine",
+   "desc": "Recover a lot of HP for 1 ally.",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    0,
+    0
+   ],
+   "magnitude": 250,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 56,
+   "name": "Antitoxin",
+   "desc": "Cure poison.",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4120,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 57,
+   "name": "Cough Drop",
+   "desc": "Cure sleep.",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4120,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 58,
+   "name": "Revival Jizo",
+   "desc": "Revive 1 ally.",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 135,
+   "codeHi": 0,
+   "clauses": [
+    4120,
+    4114,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 59,
+   "name": "Crab One Breath",
+   "desc": "Crab breath attack (single).",
+   "element": 5,
+   "elementName": "Water",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 65,
+   "sub": 0
+  },
+  {
+   "id": 60,
+   "name": "Crab All Breath",
+   "desc": "Crab breath attack (all).",
+   "element": 5,
+   "elementName": "Water",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 40,
+   "sub": 0
+  },
+  {
+   "id": 61,
+   "name": "Drain",
+   "desc": "Drain 1 enemy's life energy.",
+   "element": 7,
+   "elementName": "Soul Eater",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    16402,
+    0,
+    36880
+   ],
+   "magnitude": 0,
+   "power": 180,
+   "sub": 0
+  },
+  {
+   "id": 62,
+   "name": "Immediate Death",
+   "desc": "Instant death.",
+   "element": 7,
+   "elementName": "Soul Eater",
+   "code": 10,
+   "codeHi": 3,
+   "clauses": [
+    0,
+    0,
+    4116
+   ],
+   "magnitude": 0,
+   "power": 10,
+   "sub": 0
+  },
+  {
+   "id": 63,
+   "name": "Voice of Darkness",
+   "desc": "Dark magic against all.",
+   "element": 7,
+   "elementName": "Soul Eater",
+   "code": 34,
+   "codeHi": 3,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 64,
+   "name": "Manta Beam",
+   "desc": "Widespread beam attack.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 80,
+   "sub": 0
+  },
+  {
+   "id": 65,
+   "name": "Meow Attack",
+   "desc": "Recover ally's HP.",
+   "element": 5,
+   "elementName": "Water",
+   "code": 18,
+   "codeHi": 12,
+   "clauses": [
+    1048,
+    1042,
+    0
+   ],
+   "magnitude": 150,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 66,
+   "name": "Adonis Attack",
+   "desc": "1.2x total damage to 1 enemy.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 120,
+   "sub": 0
+  },
+  {
+   "id": 67,
+   "name": "Nymph Attack",
+   "desc": "0.7x total damage to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 70,
+   "sub": 0
+  },
+  {
+   "id": 68,
+   "name": "Beauty Attack",
+   "desc": "0.7x total damage to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 70,
+   "sub": 0
+  },
+  {
+   "id": 69,
+   "name": "True Friends Attack",
+   "desc": "1.5x total damage to 1 enemy.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 150,
+   "sub": 0
+  },
+  {
+   "id": 70,
+   "name": "Ninja Attack",
+   "desc": "1.0x total damage to 1 enemy.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 71,
+   "name": "Pirate Attack",
+   "desc": "1.0x total damage to 1 enemy.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 72,
+   "name": "Sorcerer Attack",
+   "desc": "120 fire damage to all enemies.",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 120,
+   "sub": 0
+  },
+  {
+   "id": 73,
+   "name": "Double Sword Attack",
+   "desc": "0.4x total damage to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 40,
+   "sub": 0
+  },
+  {
+   "id": 74,
+   "name": "Family Attack",
+   "desc": "1.0x total damage to 1 enemy.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 75,
+   "name": "Physical Attack",
+   "desc": "1.0x total damage to 1 enemy.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 76,
+   "name": "Bow & Arrow Attack",
+   "desc": "0.4x total damage to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 40,
+   "sub": 0
+  },
+  {
+   "id": 77,
+   "name": "Love Love Attack",
+   "desc": "0.4x total damage to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 40,
+   "sub": 0
+  },
+  {
+   "id": 78,
+   "name": "Master/Pupil Attack",
+   "desc": "120 earth damage to all enemies.",
+   "element": 3,
+   "elementName": "Earth",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 120,
+   "sub": 0
+  },
+  {
+   "id": 79,
+   "name": "Giant Sword Attack A",
+   "desc": "0.4x total damage to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 40,
+   "sub": 0
+  },
+  {
+   "id": 80,
+   "name": "Giant Sword Attack B",
+   "desc": "0.4x total damage to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 40,
+   "sub": 0
+  },
+  {
+   "id": 81,
+   "name": "Berserker Attack",
+   "desc": "1.0x total damage to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 82,
+   "name": "Fisherman Attack",
+   "desc": "0.4x total damage to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 40,
+   "sub": 0
+  },
+  {
+   "id": 83,
+   "name": "Sibling Attack",
+   "desc": "0.4x total damage to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 40,
+   "sub": 0
+  },
+  {
+   "id": 84,
+   "name": "Barrage Attack",
+   "desc": "0.4x total damage to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 40,
+   "sub": 0
+  },
+  {
+   "id": 85,
+   "name": "Barrage Attack",
+   "desc": "0.4x total damage to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 40,
+   "sub": 0
+  },
+  {
+   "id": 86,
+   "name": "Silver Attack",
+   "desc": "1.2x total damage to 1 enemy.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 120,
+   "sub": 0
+  },
+  {
+   "id": 87,
+   "name": "Spear Attack",
+   "desc": "1.2x total damage to 1 enemy.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 120,
+   "sub": 0
+  },
+  {
+   "id": 88,
+   "name": "Knight Attack",
+   "desc": "250 water damage to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 60,
+   "sub": 0
+  },
+  {
+   "id": 89,
+   "name": "Swordsman Attack",
+   "desc": "-2000HP to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 90,
+   "name": "True Ninja Attack",
+   "desc": "200 earth damage to all enemies.",
+   "element": 3,
+   "elementName": "Earth",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 250,
+   "sub": 0
+  },
+  {
+   "id": 91,
+   "name": "Golem Beam",
+   "desc": "Beam attack against all enemies.",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 34,
+   "codeHi": 4,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 80,
+   "sub": 0
+  },
+  {
+   "id": 92,
+   "name": "Umanami All",
+   "desc": "Damages all enemies.",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 34,
+   "codeHi": 3,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 55,
+   "sub": 0
+  },
+  {
+   "id": 93,
+   "name": "Frog Special",
+   "desc": "Frog specialty.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 94,
+   "name": "Flying Squirrel",
+   "desc": "Call for friends.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 1,
+   "sub": 0
+  },
+  {
+   "id": 95,
+   "name": "Water Single",
+   "desc": "Water dragon's magic (single).",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 15,
+   "sub": 25
+  },
+  {
+   "id": 96,
+   "name": "Bit Recover",
+   "desc": "Recover HP for 1 ally.",
+   "element": 5,
+   "elementName": "Water",
+   "code": 7,
+   "codeHi": 3,
+   "clauses": [
+    4120,
+    4114,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 97,
+   "name": "Mega Bit Recover",
+   "desc": "Recover a lot of HP for 1 ally.",
+   "element": 5,
+   "elementName": "Water",
+   "code": 7,
+   "codeHi": 3,
+   "clauses": [
+    4120,
+    4114,
+    0
+   ],
+   "magnitude": 100,
+   "power": 300,
+   "sub": 0
+  },
+  {
+   "id": 98,
+   "name": "Bit Magic",
+   "desc": "-100HP to all enemies.",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 34,
+   "codeHi": 3,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 99,
+   "name": "Golem Punch",
+   "desc": "Punch 1 enemy.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 120,
+   "sub": 0
+  },
+  {
+   "id": 100,
+   "name": "Fish Magic",
+   "desc": "-150HP to all enemies.",
+   "element": 5,
+   "elementName": "Water",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 120,
+   "sub": 0
+  },
+  {
+   "id": 101,
+   "name": "Golem Heal",
+   "desc": "Cure status ailments & full HP (1 ally).",
+   "element": 5,
+   "elementName": "Water",
+   "code": 7,
+   "codeHi": 2,
+   "clauses": [
+    4120,
+    4114,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 102,
+   "name": "Bird Breath",
+   "desc": "-150HP to 1 enemy.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 6,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 150,
+   "sub": 0
+  },
+  {
+   "id": 103,
+   "name": "Golem Finger",
+   "desc": "Finger beam against all enemies.",
+   "element": 3,
+   "elementName": "Earth",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 200,
+   "sub": 0
+  },
+  {
+   "id": 104,
+   "name": "Golem Eye",
+   "desc": "Eye beam against 1 enemy.",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 10,
+   "codeHi": 0,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 105,
+   "name": "Bat Rush",
+   "desc": "Cooperative bat attack.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 10,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 106,
+   "name": "Devouring Plant",
+   "desc": "Suck up all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1044
+   ],
+   "magnitude": 0,
+   "power": 30,
+   "sub": 0
+  },
+  {
+   "id": 107,
+   "name": "Spewing Plant",
+   "desc": "-50HP to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 30
+  },
+  {
+   "id": 108,
+   "name": "Plant Pollen",
+   "desc": "-100HP to all enemies.",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 109,
+   "name": "Crab Breath Single",
+   "desc": "Crab breath (single).",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 200,
+   "sub": 0
+  },
+  {
+   "id": 110,
+   "name": "Crab Breath All",
+   "desc": "Crab breath (all).",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 111,
+   "name": "Slash",
+   "desc": "Annihilate all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 0,
+   "clauses": [
+    0,
+    0,
+    1044
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 112,
+   "name": "Tiny Bit Attack",
+   "desc": "-150HP to all enemies.",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 34,
+   "codeHi": 3,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 150,
+   "sub": 0
+  },
+  {
+   "id": 113,
+   "name": "Tiny Bit Heal",
+   "desc": "1 ally recovers HP.",
+   "element": 5,
+   "elementName": "Water",
+   "code": 7,
+   "codeHi": 3,
+   "clauses": [
+    4120,
+    4114,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 114,
+   "name": "Boss Manta Attack",
+   "desc": "-150HP to 1 enemy.",
+   "element": 5,
+   "elementName": "Water",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 80,
+   "sub": 0
+  },
+  {
+   "id": 115,
+   "name": "Boss Manta Heal",
+   "desc": "Cure status ailments & +100 HP (1 ally).",
+   "element": 5,
+   "elementName": "Water",
+   "code": 6,
+   "codeHi": 2,
+   "clauses": [
+    4120,
+    4114,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 116,
+   "name": "Fire Breath",
+   "desc": "-130HP to all enemies.",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 34,
+   "codeHi": 3,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 130,
+   "sub": 0
+  },
+  {
+   "id": 117,
+   "name": "Thunder Breath",
+   "desc": "-80HP to all enemies.",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 34,
+   "codeHi": 3,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 80,
+   "sub": 10
+  },
+  {
+   "id": 118,
+   "name": "Wind Breath",
+   "desc": "Puts target to sleep.",
+   "element": 2,
+   "elementName": "Wind",
+   "code": 34,
+   "codeHi": 3,
+   "clauses": [
+    0,
+    0,
+    1540
+   ],
+   "magnitude": 0,
+   "power": 5,
+   "sub": 0
+  },
+  {
+   "id": 119,
+   "name": "Chin Attack",
+   "desc": "-150HP to 1 enemy.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 150,
+   "sub": 0
+  },
+  {
+   "id": 120,
+   "name": "Rune Cannon",
+   "desc": "-300HP to all enemies.",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 300,
+   "sub": 0
+  },
+  {
+   "id": 121,
+   "name": "Revive",
+   "desc": "HP/status a",
+   "element": 5,
+   "elementName": "Water",
+   "code": 135,
+   "codeHi": 3,
+   "clauses": [
+    4120,
+    4114,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 122,
+   "name": "",
+   "desc": "",
+   "element": 3,
+   "elementName": "Earth",
+   "code": 6,
+   "codeHi": 3,
+   "clauses": [
+    4164,
+    4164,
+    0
+   ],
+   "magnitude": 30,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 123,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 50,
+   "sub": 0
+  },
+  {
+   "id": 124,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 0,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 50,
+   "sub": 30
+  },
+  {
+   "id": 125,
+   "name": "",
+   "desc": "",
+   "element": 3,
+   "elementName": "Earth",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 10,
+   "sub": 0
+  },
+  {
+   "id": 126,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 50,
+   "sub": 0
+  },
+  {
+   "id": 127,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 8,
+   "clauses": [
+    16402,
+    0,
+    1041
+   ],
+   "magnitude": 150,
+   "power": 200,
+   "sub": 0
+  },
+  {
+   "id": 128,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1044
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 129,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 14,
+   "sub": 0
+  },
+  {
+   "id": 130,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4120,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 131,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 80,
+   "sub": 0
+  },
+  {
+   "id": 132,
+   "name": "",
+   "desc": "",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 34,
+   "codeHi": 3,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 133,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 120,
+   "sub": 0
+  },
+  {
+   "id": 134,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 40,
+   "sub": 0
+  },
+  {
+   "id": 135,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 40,
+   "sub": 0
+  },
+  {
+   "id": 136,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 70,
+   "sub": 0
+  },
+  {
+   "id": 137,
+   "name": "",
+   "desc": "",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 150,
+   "sub": 0
+  },
+  {
+   "id": 138,
+   "name": "",
+   "desc": "",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 139,
+   "name": "",
+   "desc": "",
+   "element": 3,
+   "elementName": "Earth",
+   "code": 18,
+   "codeHi": 3,
+   "clauses": [
+    1092,
+    0,
+    0
+   ],
+   "magnitude": 50,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 140,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 34,
+   "codeHi": 10,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 141,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 150,
+   "sub": 0
+  },
+  {
+   "id": 142,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 150,
+   "sub": 0
+  },
+  {
+   "id": 143,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 12,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 150,
+   "sub": 0
+  },
+  {
+   "id": 144,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 18,
+   "sub": 0
+  },
+  {
+   "id": 145,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4112,
+    0,
+    0
+   ],
+   "magnitude": 50,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 146,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4112,
+    0,
+    0
+   ],
+   "magnitude": 50,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 147,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4112,
+    0,
+    0
+   ],
+   "magnitude": 50,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 148,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    0,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 149,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    0,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 150,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    0,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 151,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    0,
+    0
+   ],
+   "magnitude": 200,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 152,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    4164,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 153,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    4120,
+    0
+   ],
+   "magnitude": 50,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 154,
+   "name": "",
+   "desc": "",
+   "element": 5,
+   "elementName": "Water",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 70,
+   "sub": 0
+  },
+  {
+   "id": 155,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 60,
+   "sub": 0
+  },
+  {
+   "id": 156,
+   "name": "",
+   "desc": "",
+   "element": 7,
+   "elementName": "Soul Eater",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 90,
+   "sub": 20
+  },
+  {
+   "id": 157,
+   "name": "",
+   "desc": "",
+   "element": 7,
+   "elementName": "Soul Eater",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 120,
+   "sub": 0
+  },
+  {
+   "id": 158,
+   "name": "",
+   "desc": "",
+   "element": 7,
+   "elementName": "Soul Eater",
+   "code": 10,
+   "codeHi": 0,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 70,
+   "sub": 0
+  },
+  {
+   "id": 159,
+   "name": "",
+   "desc": "",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 150,
+   "sub": 0
+  },
+  {
+   "id": 160,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 6,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 150,
+   "sub": 0
+  },
+  {
+   "id": 161,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    4164,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 162,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    0,
+    0
+   ],
+   "magnitude": 500,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 163,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    0,
+    0
+   ],
+   "magnitude": 150,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 164,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    4164,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 165,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    0,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 166,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    4164,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 167,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    0,
+    0
+   ],
+   "magnitude": 200,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 168,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4114,
+    4120,
+    0
+   ],
+   "magnitude": 200,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 169,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4112,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 170,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4112,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 171,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4112,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 172,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4112,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 173,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4112,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 174,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4112,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 175,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4112,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 176,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4112,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 177,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4112,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 178,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4112,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 179,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4112,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 180,
+   "name": "",
+   "desc": "",
+   "element": 0,
+   "elementName": "Unite / special",
+   "code": 7,
+   "codeHi": 0,
+   "clauses": [
+    4112,
+    0,
+    0
+   ],
+   "magnitude": 0,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 181,
+   "name": "",
+   "desc": "",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 150,
+   "sub": 0
+  },
+  {
+   "id": 182,
+   "name": "",
+   "desc": "",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 80,
+   "sub": 0
+  },
+  {
+   "id": 183,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 80,
+   "sub": 0
+  },
+  {
+   "id": 184,
+   "name": "",
+   "desc": "",
+   "element": 5,
+   "elementName": "Water",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 20,
+   "sub": 0
+  },
+  {
+   "id": 185,
+   "name": "",
+   "desc": "",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 120,
+   "sub": 0
+  },
+  {
+   "id": 186,
+   "name": "",
+   "desc": "",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 34,
+   "codeHi": 3,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 60,
+   "sub": 0
+  },
+  {
+   "id": 187,
+   "name": "",
+   "desc": "",
+   "element": 5,
+   "elementName": "Water",
+   "code": 10,
+   "codeHi": 6,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 150,
+   "sub": 0
+  },
+  {
+   "id": 188,
+   "name": "",
+   "desc": "",
+   "element": 2,
+   "elementName": "Wind",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 189,
+   "name": "",
+   "desc": "",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 34,
+   "codeHi": 3,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 50,
+   "sub": 0
+  },
+  {
+   "id": 190,
+   "name": "",
+   "desc": "",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 120,
+   "sub": 0
+  },
+  {
+   "id": 191,
+   "name": "",
+   "desc": "",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 34,
+   "codeHi": 3,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 60,
+   "sub": 0
+  },
+  {
+   "id": 192,
+   "name": "",
+   "desc": "",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 193,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 70,
+   "sub": 0
+  },
+  {
+   "id": 194,
+   "name": "",
+   "desc": "",
+   "element": 5,
+   "elementName": "Water",
+   "code": 7,
+   "codeHi": 1,
+   "clauses": [
+    4120,
+    4114,
+    0
+   ],
+   "magnitude": 100,
+   "power": 0,
+   "sub": 0
+  },
+  {
+   "id": 195,
+   "name": "",
+   "desc": "",
+   "element": 1,
+   "elementName": "Fire",
+   "code": 10,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 40,
+   "sub": 0
+  },
+  {
+   "id": 196,
+   "name": "",
+   "desc": "",
+   "element": 5,
+   "elementName": "Water",
+   "code": 34,
+   "codeHi": 1,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 30,
+   "sub": 0
+  },
+  {
+   "id": 197,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 200,
+   "sub": 0
+  },
+  {
+   "id": 198,
+   "name": "",
+   "desc": "",
+   "element": 2,
+   "elementName": "Wind",
+   "code": 34,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    1041
+   ],
+   "magnitude": 0,
+   "power": 100,
+   "sub": 0
+  },
+  {
+   "id": 199,
+   "name": "",
+   "desc": "",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 50,
+   "sub": 25
+  },
+  {
+   "id": 200,
+   "name": "",
+   "desc": "",
+   "element": 4,
+   "elementName": "Lightning",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 50,
+   "sub": 25
+  },
+  {
+   "id": 201,
+   "name": "",
+   "desc": "",
+   "element": 11,
+   "elementName": "Passive",
+   "code": 10,
+   "codeHi": 2,
+   "clauses": [
+    0,
+    0,
+    4113
+   ],
+   "magnitude": 0,
+   "power": 300,
+   "sub": 0
+  }
+ ]
+}

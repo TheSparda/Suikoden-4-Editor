@@ -282,12 +282,22 @@ reveal the ordering for all units. A speculative toggle is intentionally NOT shi
 note that flipping a recruit bit alone may not make a unit usable, since HQ/party
 availability and story gates are separate state.
 
-## Spell / unite tables — NOT yet located
-S3 kept spell/unite parameter tables in the ELF 2nd PT_LOAD, findable by an ascending
-damage curve. S4's ELF 2nd PT_LOAD (file 0x278480, vaddr 0x4F7480) was scanned the same
-way; the ascending-field heuristic is too noisy here (hit only lookup ramps like a
-37,39,41,… scaling table at vaddr 0x589FB0, not spells). Needs a name-string or
-damage-value anchor from a guide to pin the table. Deferred.
+## Spell / action table: LOCATED 2026-11-19 (write-enabled, #50)
+Not in the ELF: the table loads with the menu/battle database from FILEDATA.BIN
+archive 3, entry 656 (id 0x6AB, ISO 0x7867DFE0, 35,514 bytes), at entry +660.
+A byte-identical duplicate sits in archive 7, entry 2 (id 0x6AA, ISO 0x7874D740)
+at entry +52. Grid: 205 records x 48 bytes (ISO 0x7867E274 / 0x7874D774).
+The LOGICAL record for action a starts 12 bytes into grid record a:
++0/+2 text unit indices (2a, 2a+1), +4 element/family, +6 target-scope code
+(0x0A damage one enemy, 0x22 damage all enemies, 0x07 heal one ally, 0x13 heal
+all allies, 0x06 buff one ally, 0x12 buff all allies, 0x42 special, 0x87 revive
+one ally), clause words at +8/+16/+28 (high byte scope bits: 0x10 one, 0x04 all,
+0x80 drain, 0x40 self, 0x20 grounded), +24 magnitude, +44 power, +46 secondary %.
+Text is glyph-encoded (unit = 0x8A00 + (ord - 0x20), space 0xC400, end C100 FFFF);
+the entry's own pool decodes all 202 actions. Proven in game: flipping Healing
+Wind's +6 code 0x07 to 0x13 in RAM changed its menu targeting from one ally to
+all allies (the clause words alone did not). Data: Editor/s4_spells.json,
+generator Editor/build_s4_spells.py. Full analysis: lab spell_table.md.
 
 ## Inventory + rune uses — LOCATED 2026-11-15 (write-enabled)
 

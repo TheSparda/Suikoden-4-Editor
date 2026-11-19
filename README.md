@@ -108,7 +108,7 @@ edit either, convert it to a memory card / `.psu` / `.cbs` first.
 
 ## ISO editor (NTSC-U disc)
 
-Open the disc image and switch between two tabs:
+Open the disc image and switch between three tabs:
 
 ### Patches
 - **Encounter rate**, a slider that scales how often random battles trigger. The game
@@ -126,6 +126,16 @@ Open the disc image and switch between two tabs:
 Every patch site is verified against the pristine disc's stock bytes before writing.
 A **Changes** card lists what is already patched on the opened disc, with per-patch
 **restore-to-stock** and a restore-all.
+
+### Spells
+Edit a spell's **targeting shape**: turn a single-target spell into an all-target one
+(Thunder Runner hitting every enemy, a one-ally heal covering the whole party), or
+narrow an all-target spell back to a single target. The spell definition table was
+located inside the disc's FILEDATA database (both copies are patched together), and
+each spell's scope code is switched within its own kind (damage, heal or buff),
+mirroring how the game's own spells are built. Spells with mixed or revive targeting
+have no verified single/all pair and stay fixed. Per-spell and restore-all
+**restore-to-stock** included.
 
 ### Sharing patches
 - **`.s4mod` recipes**, export your patch set as a small JSON recipe; anyone can apply

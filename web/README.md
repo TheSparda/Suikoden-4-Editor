@@ -9,10 +9,11 @@ Live: **https://thesparda.github.io/Suikoden-4-Editor/web/**
 Three tabs:
 
 - **Save Editor** — full parity with the desktop tool (runs the real `s4save.py` in Pyodide).
-- **ISO Editor** — direct disc edits in two tabs: **Patches** (encounter rate, battle
-  toggles, infinite item use, free rune casting, mod recipes) and **Files** (a browser for
-  the disc's FILEDATA archives). Written in place on desktop or streamed as a patched
-  copy on Android.
+- **ISO Editor**: direct disc edits in three tabs: **Patches** (encounter rate, battle
+  toggles, infinite item use, free rune casting, mod recipes), **Spells** (edit each
+  spell's targeting shape, single target to all enemies or all allies and back) and
+  **Files** (a browser for the disc's FILEDATA archives). Written in place on desktop
+  or streamed as a patched copy on Android.
 - **Reference** — browse the 113 characters, 519 items, 42 runes, and rune affinities.
 
 ---
@@ -168,6 +169,9 @@ npm test
 - `vcdiff.mjs` — xdelta encode/decode round-trips for the patch-sharing module.
 - `stock-restore.mjs` — verifies every ISO patch site's stock bytes against a pristine
   disc (skips cleanly when no disc is present).
+- `spells.mjs`: verifies the spell targeting data (`Editor/s4_spells.json`), the scope
+  flip rule extracted from `iso.js`, and both on-disc table copies (disc checks skip
+  cleanly when no disc is present).
 
 ## Android / emulator flow
 
